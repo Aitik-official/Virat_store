@@ -159,9 +159,9 @@ export function SiteFooter() {
             {/* Social Icons */}
             <div className="mt-8 flex gap-3">
               {[
-                { Icon: IgIcon, label: 'Instagram', href: 'https://instagram.com' },
+                { Icon: IgIcon, label: 'Instagram', href: 'https://www.instagram.com/viratsportsofficial/' },
                 { Icon: XIcon, label: 'X (Twitter)', href: 'https://x.com' },
-                { Icon: FbIcon, label: 'Facebook', href: 'https://facebook.com' },
+                { Icon: FbIcon, label: 'Facebook', href: 'https://www.facebook.com/ViratSportsOfficial/' },
               ].map(({ Icon, label, href }) => (
                 <a
                   key={label}

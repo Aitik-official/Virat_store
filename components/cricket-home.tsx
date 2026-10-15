@@ -177,8 +177,8 @@ export function HeroSlider() {
         <div
           key={src}
           className={`absolute inset-0 transition-all duration-1000 ease-out ${index === active
-              ? 'scale-100 opacity-100'
-              : 'scale-105 opacity-0 pointer-events-none'
+            ? 'scale-100 opacity-100'
+            : 'scale-105 opacity-0 pointer-events-none'
             }`}
         >
           <Image
@@ -230,47 +230,56 @@ export function HeroSlider() {
 }
 
 function PromoSlide({ slide }: { slide: PromotionalSlide }) {
+  const rohitImg = slide.findGame || '/images/Rohit.jpeg'
+  const skyImg = slide.cricketAction || '/images/SKY.jpeg'
+
   return (
-    <div className="grid h-full grid-cols-1 sm:grid-cols-2 md:grid-cols-[25%_30%_15%_30%]">
+    <div className="grid h-full grid-cols-1 sm:grid-cols-2 md:grid-cols-[16%_34%_16%_34%] items-stretch">
       {/* Text block 1 */}
       <Link
         href="/products?sport=cricket"
-        className="group flex min-h-12 sm:min-h-16 md:min-h-20 items-center justify-center border-b border-r border-slate-200 p-3 sm:p-4 text-center text-sm sm:text-base md:text-xl font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#080d2d] hover:text-white md:border-b-0"
+        className="group flex min-h-14 sm:min-h-16 md:min-h-0 items-center justify-center border-b border-r border-slate-200 px-3 py-4 text-center text-sm sm:text-base md:text-lg lg:text-xl font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#080d2d] hover:text-white md:border-b-0"
       >
         <span className="relative inline-block transition-transform duration-300 group-hover:scale-105">
           Find your game
           <span className="block h-0.5 w-0 bg-[#e51717] transition-all duration-300 group-hover:w-full" />
         </span>
       </Link>
-      {/* Image panel 1 */}
-      <div className="group relative min-h-36 sm:min-h-48 overflow-hidden border-b border-slate-200 bg-[#f9fafb] sm:border-r md:border-b-0">
-        <div className="flex size-full">
-          <div className="relative h-full w-1/2 overflow-hidden border-r border-slate-200 transition-transform duration-500 group-hover:scale-105">
-            <Image src={slide.findGame || '/images/1A.jpg'} alt="Find your game" fill className="object-cover" sizes="(max-width:768px) 50vw, 15vw" />
-          </div>
-          <div className="relative h-full w-1/2 overflow-hidden transition-transform duration-500 group-hover:scale-105">
-            <Image src="/images/banner1.jpeg" alt="Find your game action" fill className="object-cover" sizes="(max-width:768px) 50vw, 15vw" />
-          </div>
+
+      {/* Image panel 1 - Rohit */}
+      <div className="group relative aspect-[1500/1076] w-full overflow-hidden border-b border-slate-200 bg-white sm:border-r md:border-b-0">
+        <div className="relative size-full transition-transform duration-500 group-hover:scale-[1.02]">
+          <Image
+            src={rohitImg}
+            alt="Rohit Sharma - Virat Sports"
+            fill
+            priority
+            className="object-contain object-center"
+            sizes="(max-width:768px) 100vw, 34vw"
+          />
         </div>
       </div>
+
       {/* Text block 2 */}
       <Link
         href="/products?sport=cricket"
-        className="group flex min-h-12 sm:min-h-16 md:min-h-20 items-center justify-center border-b border-r border-slate-200 p-3 sm:p-4 text-center text-sm sm:text-base md:text-xl font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#e51717] hover:text-white md:border-b-0"
+        className="group flex min-h-14 sm:min-h-16 md:min-h-0 items-center justify-center border-b border-r border-slate-200 px-3 py-4 text-center text-sm sm:text-base md:text-lg lg:text-xl font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#e51717] hover:text-white md:border-b-0"
       >
         <span className="relative inline-block transition-transform duration-300 group-hover:scale-105">
           Cricket
         </span>
       </Link>
-      {/* Image panel 2 */}
-      <div className="group relative min-h-36 sm:min-h-48 overflow-hidden bg-[#f9fafb]">
-        <div className="flex size-full">
-          <div className="relative h-full w-1/2 overflow-hidden border-r border-slate-200 transition-transform duration-500 group-hover:scale-105">
-            <Image src={slide.cricketAction || '/images/1B.jpg'} alt="Cricket action" fill className="object-cover" sizes="(max-width:768px) 50vw, 15vw" />
-          </div>
-          <div className="relative h-full w-1/2 overflow-hidden transition-transform duration-500 group-hover:scale-105">
-            <Image src="/images/banner2.jpeg" alt="Cricket action 2" fill className="object-cover" sizes="(max-width:768px) 50vw, 15vw" />
-          </div>
+
+      {/* Image panel 2 - SKY */}
+      <div className="group relative aspect-[1500/1076] w-full overflow-hidden bg-white">
+        <div className="relative size-full transition-transform duration-500 group-hover:scale-[1.02]">
+          <Image
+            src={skyImg}
+            alt="Suryakumar Yadav - Virat Sports"
+            fill
+            className="object-contain object-center"
+            sizes="(max-width:768px) 100vw, 34vw"
+          />
         </div>
       </div>
     </div>

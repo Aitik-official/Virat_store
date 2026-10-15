@@ -11,6 +11,10 @@ export interface TeamwearSlide {
 
 const DEFAULT_SLIDES: TeamwearSlide[] = [
   {
+    image: '/images/TeamWear/TeamWear4.png',
+    alt: 'Virat Elite Match Gear',
+  },
+  {
     image: '/images/TeamWear/TeamWear1.png',
     alt: 'Virat Custom Teamwear',
   },
@@ -65,8 +69,8 @@ export function TeamWearSection({
 
         {/* 2. Scaled-up Responsive Slider Card with minimal top gap */}
         <div className="group relative mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200/90 bg-[#080d2d] shadow-xl transition-all duration-500 hover:shadow-2xl sm:mt-4 sm:rounded-2xl">
-          {/* Aspect ratio tailored to match the TeamWear images (roughly 3:2 to 16:10) so they show fully */}
-          <div className="relative aspect-[4/3] w-full xs:aspect-[16/11] sm:aspect-[16/10] md:aspect-[16/9] lg:aspect-[1.9/1]">
+          {/* Aspect ratio precisely tailored to TeamWear4 (1600x1000 = 16:10) so it displays fully without cropping */}
+          <div className="relative aspect-[16/10] w-full">
             {slides.map((slide, index) => {
               const isActive = index === active
               return (
@@ -81,7 +85,7 @@ export function TeamWearSection({
                     alt={slide.alt || 'Virat Teamwear'}
                     fill
                     priority={index === 0}
-                    className="object-contain sm:object-cover sm:object-center"
+                    className="object-contain object-center"
                     sizes="(max-width: 640px) 100vw, (max-width: 1280px) 95vw, 1152px"
                   />
                 </div>

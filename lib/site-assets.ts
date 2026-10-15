@@ -8,17 +8,14 @@ export type PromotionalSlide = {
 export const siteAssets = {
   logo: '/images/virat logo.png',
   heroBanners: [
+    '/images/banner8.png',
     '/images/banner1.jpeg',
-    '/images/banner2.jpeg',
     '/images/banner3.jpeg',
-    '/images/banner4.jpeg',
     '/images/banner5.jpeg',
-    '/images/banner6.jpeg',
-    '/images/banner7.jpeg',
   ],
-  promotionalSlides: [{ findGame: '/images/1A.jpg', cricketAction: '/images/1B.jpg' }] as PromotionalSlide[],
+  promotionalSlides: [{ findGame: '/images/Rohit.jpeg', cricketAction: '/images/SKY.jpeg' }] as PromotionalSlide[],
   categories: {
-    men: '/images/category/mens.png',
+    men: '/images/category/mens.jpeg',
     women: '/images/category/women.png',
     youth: '/images/category/youth.jpg',
     cap: '/images/category/cap.png',
@@ -28,6 +25,7 @@ export const siteAssets = {
   videoThumbnail: '',
   teamwearBanner: '/images/TeamWear/TeamWear1.png',
   teamwearSlides: [
+    '/images/TeamWear/TeamWear4.png',
     '/images/TeamWear/TeamWear1.png',
     '/images/TeamWear/TeamWear2.png',
     '/images/TeamWear/TeamWare3.png',
