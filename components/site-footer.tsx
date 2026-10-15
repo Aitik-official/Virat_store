@@ -89,10 +89,10 @@ export function SiteFooter() {
     <footer className="bg-[#080d2d] text-white">
       {/* Newsletter Strip */}
       <div className="border-b border-white/10 bg-[#0d1440]">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-5 px-5 py-8 sm:gap-6 sm:px-8 md:flex-row md:items-center md:px-12 md:py-10">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-6 md:flex-row md:items-center md:px-12 md:py-5">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#e51717]">Stay in the game</p>
-            <h2 className="mt-1 text-lg font-black uppercase tracking-tight sm:text-xl md:text-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#e51717]">Stay in the game</p>
+            <h2 className="mt-0.5 text-base font-black uppercase tracking-tight sm:text-lg md:text-xl">
               Get exclusive drops &amp; offers
             </h2>
           </div>
@@ -103,41 +103,41 @@ export function SiteFooter() {
             <input
               type="email"
               placeholder="Enter your email address"
-              className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-white placeholder-white/30 outline-none sm:px-4"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2 text-xs text-white placeholder-white/30 outline-none sm:px-4"
             />
             <button
               type="submit"
-              className="flex shrink-0 items-center gap-2 bg-[#e51717] px-4 py-3 text-[11px] font-black uppercase tracking-widest text-white transition-colors duration-200 hover:bg-[#c41111] sm:px-5"
+              className="flex shrink-0 items-center gap-1.5 bg-[#e51717] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-colors duration-200 hover:bg-[#c41111] sm:px-5"
             >
-              Subscribe <ArrowRight className="size-3.5" />
+              Subscribe <ArrowRight className="size-3" />
             </button>
           </form>
         </div>
       </div>
 
       {/* Main Footer Grid */}
-      <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 md:px-12 md:py-20">
-        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:gap-10">
+      <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 md:px-12 md:py-10">
+        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:gap-8">
           {/* Brand Column - full width on mobile/tablet, single col on lg */}
           <div className="sm:col-span-2 md:col-span-3 lg:col-span-1 lg:pr-8">
             <Link href="/" aria-label="Virat Sports home">
-              <div className="relative h-14 w-36 overflow-hidden rounded-lg bg-white/95 p-2">
+              <div className="relative h-12 w-32 overflow-hidden rounded-lg bg-white/95 p-1.5">
                 <Image
                   src="/images/virat logo.png"
                   alt="Virat Sports"
                   fill
                   className="object-contain"
-                  sizes="144px"
+                  sizes="128px"
                 />
               </div>
             </Link>
 
-            <p className="mt-5 max-w-xs text-[13px] leading-6 text-white">
+            <p className="mt-3 max-w-xs text-xs leading-5 text-white">
               Performance wear for the game. Sportswear for everything after it.
             </p>
 
             {/* Contact info */}
-            <ul className="mt-6 flex flex-col gap-3 text-[12px] text-white">
+            <ul className="mt-4 flex flex-col gap-2 text-xs text-white">
               <li className="flex items-center gap-2.5">
                 <Mail className="size-3.5 shrink-0 text-[#e51717]" />
                 <a href="mailto:hello@viratsports.in" className="transition-colors hover:text-[#e51717]">

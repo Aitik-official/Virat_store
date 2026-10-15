@@ -54,13 +54,13 @@ export function CartClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] px-6 py-10 lg:px-12">
-      <div className="mb-8 flex items-center justify-between border-b border-slate-200 pb-5">
+    <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-12">
+      <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tight text-[#080d2d]">
+          <h1 className="text-2xl font-black uppercase tracking-tight text-[#080d2d] sm:text-3xl">
             Shopping Bag
           </h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-slate-500">
             {items.reduce((s, i) => s + i.quantity, 0)} item(s) selected
           </p>
         </div>
@@ -72,7 +72,7 @@ export function CartClient() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         {/* Items List */}
         <div className="space-y-4">
           {items.map((item) => (

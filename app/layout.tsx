@@ -35,6 +35,13 @@ export const viewport: Viewport = {
 
 import { CartProvider } from '@/lib/cart-context'
 import { BackToTop } from '@/components/back-to-top'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+})
 
 export default function RootLayout({
   children,
@@ -42,8 +49,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" style={{ scrollBehavior: 'smooth' }}>
-      <body className="antialiased">
+    <html lang="en" className={inter.variable} style={{ scrollBehavior: 'smooth' }}>
+      <body className={`${inter.className} antialiased`}>
         <CartProvider>
           {children}
           <BackToTop />

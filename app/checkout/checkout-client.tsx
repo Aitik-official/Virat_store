@@ -700,10 +700,10 @@ export function CheckoutClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-10 lg:px-12">
+    <div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6 lg:px-12">
       {/* Breadcrumb */}
       {step !== 'confirmed' && (
-        <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
           <Link href="/" className="hover:text-[#080d2d]">Home</Link>
           <span>/</span>
           <Link href="/cart" className="hover:text-[#080d2d]">Cart</Link>
@@ -718,7 +718,7 @@ export function CheckoutClient() {
       {step === 'confirmed' ? (
         <ConfirmedStep details={details} grandTotal={grandTotalSnapshot} />
       ) : (
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* Left: active step */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             {step === 'details' && (

@@ -3,14 +3,14 @@ import { partnerLogos } from '@/lib/partner-logos'
 
 export function PartnersSection() {
   return (
-    <section id="partners" className="border-b border-slate-200 bg-[#f9fafb] px-4 py-10 sm:px-6 md:py-14">
+    <section id="partners" className="border-b border-slate-200 bg-[#f9fafb] px-4 py-6 sm:px-6 md:py-8">
       <div className="mx-auto max-w-6xl">
-        <h2 className="text-center text-xl font-black uppercase tracking-tight text-[#080d2d] md:text-3xl">
+        <h2 className="text-center text-lg font-black uppercase tracking-tight text-[#080d2d] sm:text-xl md:text-2xl">
           OUR PROUD PARTNERS
         </h2>
 
         {/* 6-column grid on desktop, 3-column on tablet, 2-column on mobile */}
-        <div className="mt-8 grid grid-cols-2 items-center justify-items-center gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-6 md:gap-x-8 md:gap-y-10">
+        <div className="mt-4 grid grid-cols-2 items-center justify-items-center gap-x-4 gap-y-4 sm:grid-cols-3 md:grid-cols-6 md:gap-x-6 md:gap-y-6">
           {partnerLogos.map((partner) => (
             <div
               key={partner.id}

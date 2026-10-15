@@ -61,9 +61,9 @@ export function ProductsClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] px-6 py-8 lg:px-12">
+    <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-12">
       {/* Top Breadcrumb & Heading */}
-      <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center">
+      <div className="mb-4 flex flex-col justify-between gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <Link href="/" className="hover:text-[#080d2d]">Home</Link>
@@ -76,9 +76,9 @@ export function ProductsClient() {
               </>
             )}
           </div>
-          <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-[#080d2d] sm:text-4xl">
+          <h1 className="mt-1 text-2xl font-black uppercase tracking-tight text-[#080d2d] sm:text-3xl">
             {selectedGender !== 'all' ? `${selectedGender}’s Collection` : 'All Products'}
-            <span className="ml-3 text-lg font-bold text-[#e51717]">({filteredProducts.length})</span>
+            <span className="ml-2.5 text-base font-bold text-[#e51717]">({filteredProducts.length})</span>
           </h1>
         </div>
 

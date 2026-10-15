@@ -20,7 +20,6 @@ export function SiteHeader() {
     { name: 'WOMEN', href: '/products?gender=women', hasDropdown: true },
     { name: 'CRICKET', href: '/products?sport=cricket', hasDropdown: true },
     { name: 'ACCESSORIES', href: '/products?sport=accessories', hasDropdown: true },
-    { name: 'DESIGN YOUR OWN', href: '/#team-wear' },
     { name: 'ABOUT', href: '/#see-it-in-action' },
   ]
 
@@ -28,7 +27,7 @@ export function SiteHeader() {
 
   return (
     <header
-      className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-[#f8f9fa] shadow-sm transition-all"
+      className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-[#f8f9fa]/95 backdrop-blur-md shadow-sm transition-all"
       onMouseLeave={() => setActiveMenu(null)}
     >
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-6 lg:px-12">

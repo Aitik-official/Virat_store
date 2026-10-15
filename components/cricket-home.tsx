@@ -56,7 +56,6 @@ export function Header() {
     { name: 'WOMEN', href: '#shop-by-category', hasDropdown: true },
     { name: 'CRICKET', href: '#shop-by-category', hasDropdown: true },
     { name: 'ACCESSORIES', href: '#shop-by-category', hasDropdown: true },
-    { name: 'DESIGN YOUR OWN', href: '#team-wear' },
     { name: 'ABOUT', href: '#see-it-in-action' },
   ]
 
@@ -148,18 +147,18 @@ export function Header() {
 export function SectionHeading({ children, subtitle }: { children: React.ReactNode; subtitle?: string }) {
   return (
     <div className="text-center">
-      <div className="mx-auto mb-3 flex items-center justify-center gap-2">
-        <span className="h-[2px] w-6 bg-[#e51717]" />
-        <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#e51717]">
+      <div className="mx-auto mb-1 flex items-center justify-center gap-1.5">
+        <span className="h-[2px] w-5 bg-[#e51717]" />
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#e51717]">
           VIRAT PERFORMANCE
         </span>
-        <span className="h-[2px] w-6 bg-[#e51717]" />
+        <span className="h-[2px] w-5 bg-[#e51717]" />
       </div>
-      <h2 className="relative inline-block text-2xl font-black uppercase tracking-tight text-[#080d2d] md:text-4xl">
+      <h2 className="relative inline-block text-xl font-black uppercase leading-tight tracking-tight text-[#080d2d] sm:text-2xl md:text-3xl">
         {children}
         <span className="text-[#e51717]">.</span>
       </h2>
-      {subtitle && <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500">{subtitle}</p>}
     </div>
   )
 }
@@ -173,7 +172,7 @@ export function HeroSlider() {
   useAutoplay(next, 5000, slides.length > 1 && !reduced)
 
   return (
-    <section className="group relative aspect-[2.4/1] w-full overflow-hidden border-b border-slate-200 bg-[#080d2d]" aria-label="Hero banner">
+    <section className="group relative aspect-[16/10] sm:aspect-[2/1] md:aspect-[2.4/1] w-full overflow-hidden border-b border-slate-200 bg-[#080d2d]" aria-label="Hero banner">
       {slides.length ? slides.map((src, index) => (
         <div
           key={src}
@@ -196,33 +195,33 @@ export function HeroSlider() {
       )}
 
       {/* Hero Badge Tagline matching logo */}
-      <div className="absolute left-6 top-6 z-10 hidden sm:flex items-center gap-2 rounded-full border border-white/40 bg-[#080d2d]/85 px-4 py-1.5 backdrop-blur-md shadow-md">
-        <span className="size-2 rounded-full bg-[#e51717] animate-pulse" />
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white">
+      <div className="absolute left-3 top-3 z-10 flex sm:left-6 sm:top-6 items-center gap-1.5 sm:gap-2 rounded-full border border-white/40 bg-[#080d2d]/85 px-3 py-1 sm:px-4 sm:py-1.5 backdrop-blur-md shadow-md">
+        <span className="size-1.5 sm:size-2 rounded-full bg-[#e51717] animate-pulse" />
+        <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.16em] sm:tracking-[0.2em] text-white">
           NEVER GIVE UP
         </span>
       </div>
 
       {slides.length > 1 && (
-        <div className="absolute bottom-4 right-4 z-10 hidden md:flex items-center gap-3 rounded-full border border-white/20 bg-[#080d2d]/85 px-3 py-1.5 text-white shadow-xl backdrop-blur-md md:bottom-6 md:right-8">
+        <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2 rounded-full border border-white/20 bg-[#080d2d]/85 px-2.5 py-1 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:right-4 md:bottom-6 md:right-8 md:gap-3 md:px-3 md:py-1.5">
           <button
             type="button"
             onClick={previous}
             aria-label="Previous hero banner"
-            className="rounded-full p-1.5 transition hover:bg-[#e51717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="rounded-full p-1 transition hover:bg-[#e51717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:p-1.5"
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-3.5 sm:size-4" />
           </button>
-          <span className="min-w-14 text-center text-xs font-black tracking-wider tabular-nums text-white" aria-live="polite">
+          <span className="min-w-10 sm:min-w-14 text-center text-[10px] sm:text-xs font-black tracking-wider tabular-nums text-white" aria-live="polite">
             <span className="text-[#e51717]">{String(active + 1).padStart(2, '0')}</span> / {String(slides.length).padStart(2, '0')}
           </span>
           <button
             type="button"
             onClick={next}
             aria-label="Next hero banner"
-            className="rounded-full p-1.5 transition hover:bg-[#e51717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="rounded-full p-1 transition hover:bg-[#e51717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:p-1.5"
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-3.5 sm:size-4" />
           </button>
         </div>
       )}
@@ -235,8 +234,8 @@ function PromoSlide({ slide }: { slide: PromotionalSlide }) {
     <div className="grid h-full grid-cols-1 sm:grid-cols-2 md:grid-cols-[25%_30%_15%_30%]">
       {/* Text block 1 */}
       <Link
-        href="#cricket"
-        className="group flex min-h-16 items-center justify-center border-b border-r border-slate-200 p-4 text-center text-base font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#080d2d] hover:text-white sm:min-h-20 md:border-b-0 md:text-xl"
+        href="/products?sport=cricket"
+        className="group flex min-h-12 sm:min-h-16 md:min-h-20 items-center justify-center border-b border-r border-slate-200 p-3 sm:p-4 text-center text-sm sm:text-base md:text-xl font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#080d2d] hover:text-white md:border-b-0"
       >
         <span className="relative inline-block transition-transform duration-300 group-hover:scale-105">
           Find your game
@@ -244,7 +243,7 @@ function PromoSlide({ slide }: { slide: PromotionalSlide }) {
         </span>
       </Link>
       {/* Image panel 1 */}
-      <div className="group relative min-h-48 overflow-hidden border-b border-slate-200 bg-[#f9fafb] sm:border-r md:border-b-0">
+      <div className="group relative min-h-36 sm:min-h-48 overflow-hidden border-b border-slate-200 bg-[#f9fafb] sm:border-r md:border-b-0">
         <div className="flex size-full">
           <div className="relative h-full w-1/2 overflow-hidden border-r border-slate-200 transition-transform duration-500 group-hover:scale-105">
             <Image src={slide.findGame || '/images/1A.jpg'} alt="Find your game" fill className="object-cover" sizes="(max-width:768px) 50vw, 15vw" />
@@ -256,15 +255,15 @@ function PromoSlide({ slide }: { slide: PromotionalSlide }) {
       </div>
       {/* Text block 2 */}
       <Link
-        href="#cricket"
-        className="group flex min-h-16 items-center justify-center border-b border-r border-slate-200 p-4 text-center text-base font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#e51717] hover:text-white sm:min-h-20 md:border-b-0 md:text-xl"
+        href="/products?sport=cricket"
+        className="group flex min-h-12 sm:min-h-16 md:min-h-20 items-center justify-center border-b border-r border-slate-200 p-3 sm:p-4 text-center text-sm sm:text-base md:text-xl font-black uppercase text-[#080d2d] transition-colors duration-300 hover:bg-[#e51717] hover:text-white md:border-b-0"
       >
         <span className="relative inline-block transition-transform duration-300 group-hover:scale-105">
           Cricket
         </span>
       </Link>
       {/* Image panel 2 */}
-      <div className="group relative min-h-48 overflow-hidden bg-[#f9fafb]">
+      <div className="group relative min-h-36 sm:min-h-48 overflow-hidden bg-[#f9fafb]">
         <div className="flex size-full">
           <div className="relative h-full w-1/2 overflow-hidden border-r border-slate-200 transition-transform duration-500 group-hover:scale-105">
             <Image src={slide.cricketAction || '/images/1B.jpg'} alt="Cricket action" fill className="object-cover" sizes="(max-width:768px) 50vw, 15vw" />
@@ -331,13 +330,13 @@ export function CategoryGrid() {
   return (
     <section ref={sectionRef} id="shop-by-category" className="border-b border-slate-200 bg-white">
       <div
-        className={`flex min-h-20 items-center justify-center border-b border-slate-200 px-5 py-6 transition-all duration-500 ${visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
+        className={`flex min-h-14 items-center justify-center border-b border-slate-200 px-4 py-4 transition-all duration-500 ${visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
           }`}
       >
         <SectionHeading subtitle="Crafted for Champions">Shop by category</SectionHeading>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-3 md:gap-5 md:p-6 lg:gap-6">
+      <div className="grid grid-cols-2 gap-2.5 p-3 sm:p-4 md:grid-cols-3 md:gap-4 md:p-5 lg:gap-5">
         {categories.map(([name, src], index) => (
           <Link
             href={`#${name.toLowerCase().replace(/[^a-z]+/g, '-')}`}

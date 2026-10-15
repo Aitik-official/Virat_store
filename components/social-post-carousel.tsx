@@ -128,20 +128,20 @@ export function SocialPostCarousel({ posts }: { posts: SocialPost[] }) {
   }
 
   return (
-    <section id="see-it-in-action" className="border-b border-slate-200 bg-[#f7f8f5] px-4 py-12 sm:px-6 md:px-12 md:py-24">
+    <section id="see-it-in-action" className="border-b border-slate-200 bg-[#f7f8f5] px-4 py-6 sm:px-6 md:px-12 md:py-10">
       <div className="mx-auto max-w-6xl">
 
         {/* Section header + nav arrows on same row (arrows hidden on mobile) */}
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4 md:items-end">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 md:items-end">
           <div>
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-1 flex items-center gap-1.5">
               <span className="h-0.5 w-5 bg-[#e51717]" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#e51717]">ON THE PITCH</span>
             </div>
-            <h2 className="text-2xl font-black uppercase leading-[0.9] text-[#080d2d] sm:text-3xl md:text-5xl">
+            <h2 className="text-xl font-black uppercase leading-[0.95] text-[#080d2d] sm:text-2xl md:text-3xl">
               See it<br />in action<span className="text-[#e51717]">.</span>
             </h2>
-            <p className="mt-2 text-sm font-medium text-slate-500">Follow the action. Share the passion.</p>
+            <p className="mt-1 text-xs font-medium text-slate-500">Follow the action. Share the passion.</p>
           </div>
 
           {/* Slider buttons hidden on mobile, visible on desktop / tablet */}
