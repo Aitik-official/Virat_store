@@ -202,3 +202,64 @@
 .animate-subtle-float {
   animation: subtleFloat 4s ease-in-out infinite;
 }
+
+@keyframes announcementTicker {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-announcement-ticker {
+  animation-name: announcementTicker;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+/* ==========================================================================
+   INVISIBLE SCROLLBAR UTILITIES (CROSS-BROWSER: Chrome, Edge, Safari, Firefox)
+   Keeps cards and containers fully scrollable with mouse/touch while hiding the scrollbar track and thumb.
+   ========================================================================== */
+.no-scrollbar,
+.scrollbar-none,
+.scrollbar-thin,
+[data-no-scrollbar],
+/* Target any card, aside, article, drawer, or modal element that overflows */
+aside,
+article,
+dialog,
+[role="dialog"],
+.card,
+[class*="card"],
+[class*="drawer"],
+[class*="modal"],
+[class*="carousel"],
+[class*="overflow-x-auto"],
+[class*="overflow-y-auto"] {
+  -ms-overflow-style: none !important; /* IE and older Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar,
+[data-no-scrollbar]::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+article::-webkit-scrollbar,
+dialog::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar,
+.card::-webkit-scrollbar,
+[class*="card"]::-webkit-scrollbar,
+[class*="drawer"]::-webkit-scrollbar,
+[class*="modal"]::-webkit-scrollbar,
+[class*="carousel"]::-webkit-scrollbar,
+[class*="overflow-x-auto"]::-webkit-scrollbar,
+[class*="overflow-y-auto"]::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}

@@ -1,8 +1,14 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, MapPin, Mail, Phone } from 'lucide-react'
+import {
+  defaultContactInfo,
+  getStoredTaxonomyConfig,
+  type StoreContactInfo,
+} from '@/lib/store-taxonomy'
 
 // Inline SVG social icons (lucide-react doesn't ship brand icons)
 function IgIcon({ className = 'size-4' }: { className?: string }) {
@@ -32,34 +38,32 @@ function FbIcon({ className = 'size-4' }: { className?: string }) {
 const footerLinks = {
   shop: [
     { label: 'New Arrivals', href: '/products?badge=new' },
-    { label: "Men's", href: '/products?gender=men' },
-    { label: "Women's", href: '/products?gender=women' },
-    { label: 'Cricket', href: '/products?sport=cricket' },
-    { label: 'Accessories', href: '/products?sport=accessories' },
-  ],
-  sports: [
-    { label: 'Cricket', href: '/products?sport=cricket' },
-    { label: 'Football', href: '/products?sport=football' },
-    { label: 'Shooting', href: '/products?sport=shooting' },
-    { label: 'Training', href: '/products?sport=training' },
-    { label: 'India Merchandise', href: '/products?sport=india-merchandise' },
-    { label: 'Shop Outlet', href: '/products?outlet=true' },
+    { label: "Men's Collection", href: '/products?gender=men' },
+    { label: "Women's Collection", href: '/products?gender=women' },
+    { label: 'Cricket Gear', href: '/products?sport=cricket' },
+    { label: 'Teamwear', href: '/#team-wear' },
+    { label: 'Outlet & Deals', href: '/products?outlet=true' },
   ],
   categories: [
-    { label: 'Tops', href: '/products?category=tops' },
+    { label: 'Tops & Jerseys', href: '/products?category=tops' },
     { label: 'Polos', href: '/products?category=polos' },
     { label: 'Sleeveless', href: '/products?category=sleeveless' },
-    { label: 'Long Sleeves', href: '/products?category=long-sleeves' },
     { label: 'Jackets & Hoodies', href: '/products?category=jacket-and-hoodies' },
-    { label: 'Shorts', href: '/products?category=shorts' },
-    { label: 'Pants & Leggings', href: '/products?category=pants-and-leggings' },
+    { label: 'Shorts & Bottoms', href: '/products?category=shorts' },
     { label: 'Tracksuits', href: '/products?category=tracksuits' },
   ],
+  company: [
+    { label: 'About Virat', href: '/about' },
+    { label: 'The Brand Story', href: '/about' },
+    { label: 'Custom Teamwear', href: '/#team-wear' },
+    { label: 'Action Showcase', href: '/#video' },
+    { label: 'Our Partners', href: '/#partners' },
+  ],
   support: [
-    { label: 'Contact Us', href: '/#contact-us' },
-    { label: 'Shipping Info', href: '/#contact-us' },
-    { label: 'Returns & Exchanges', href: '/#contact-us' },
-    { label: 'Size Guide', href: '/#contact-us' },
+    { label: 'Contact Us', href: '/contact' },
+    { label: 'Shipping Info', href: '/shipping' },
+    { label: 'Returns & Exchanges', href: '/returns' },
+    { label: 'Size Guide', href: '/size-guide' },
   ],
 }
 
@@ -85,6 +89,41 @@ function FooterCol({ title, links }: { title: string; links: { label: string; hr
 }
 
 export function SiteFooter() {
+  const [contact, setContact] = useState<StoreContactInfo>(defaultContactInfo)
+
+  useEffect(() => {
+    // Initial sync from localStorage
+    const conf = getStoredTaxonomyConfig()
+    if (conf?.contactInfo) {
+      setContact(conf.contactInfo)
+    }
+
+    // Listen to real-time Admin updates via storage event
+    const handleSync = () => {
+      const updated = getStoredTaxonomyConfig()
+      if (updated?.contactInfo) {
+        setContact(updated.contactInfo)
+      }
+    }
+    window.addEventListener('storage', handleSync)
+
+    // Background fetch from MongoDB API
+    fetch('/api/taxonomy')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.taxonomy?.contactInfo) {
+          setContact({ ...defaultContactInfo, ...data.taxonomy.contactInfo })
+        }
+      })
+      .catch(() => {})
+
+    return () => window.removeEventListener('storage', handleSync)
+  }, [])
+
+  const email = contact.email || defaultContactInfo.email
+  const phone = contact.phone || defaultContactInfo.phone
+  const address = contact.address || defaultContactInfo.address
+
   return (
     <footer className="bg-[#080d2d] text-white">
       {/* Newsletter Strip */}
@@ -136,32 +175,32 @@ export function SiteFooter() {
               Performance wear for the game. Sportswear for everything after it.
             </p>
 
-            {/* Contact info */}
+            {/* Dynamic Contact info from Admin */}
             <ul className="mt-4 flex flex-col gap-2 text-xs text-white">
               <li className="flex items-center gap-2.5">
                 <Mail className="size-3.5 shrink-0 text-[#e51717]" />
-                <a href="mailto:hello@viratsports.in" className="transition-colors hover:text-[#e51717]">
-                  hello@viratsports.in
+                <a href={`mailto:${email}`} className="transition-colors hover:text-[#e51717]">
+                  {email}
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="size-3.5 shrink-0 text-[#e51717]" />
-                <a href="tel:+911800123456" className="transition-colors hover:text-[#e51717]">
-                  1800-123-4567
+                <a href={`tel:${phone.replace(/\s+/g, '')}`} className="transition-colors hover:text-[#e51717]">
+                  {phone}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="mt-0.5 size-3.5 shrink-0 text-[#e51717]" />
-                <span>Sector 18, Noida — Delhi NCR, India</span>
+                <span>{address}</span>
               </li>
             </ul>
 
-            {/* Social Icons */}
+            {/* Social Icons with Dynamic Links */}
             <div className="mt-8 flex gap-3">
               {[
-                { Icon: IgIcon, label: 'Instagram', href: 'https://www.instagram.com/viratsportsofficial/' },
-                { Icon: XIcon, label: 'X (Twitter)', href: 'https://x.com' },
-                { Icon: FbIcon, label: 'Facebook', href: 'https://www.facebook.com/ViratSportsOfficial/' },
+                { Icon: IgIcon, label: 'Instagram', href: contact.instagram || 'https://www.instagram.com/viratsportsofficial/' },
+                { Icon: XIcon, label: 'X (Twitter)', href: contact.twitter || 'https://x.com' },
+                { Icon: FbIcon, label: 'Facebook', href: contact.facebook || 'https://www.facebook.com/ViratSportsOfficial/' },
               ].map(({ Icon, label, href }) => (
                 <a
                   key={label}
@@ -178,8 +217,8 @@ export function SiteFooter() {
           </div>
 
           <FooterCol title="Shop" links={footerLinks.shop} />
-          <FooterCol title="Sports" links={footerLinks.sports} />
           <FooterCol title="Categories" links={footerLinks.categories} />
+          <FooterCol title="Company" links={footerLinks.company} />
           <FooterCol title="Support" links={footerLinks.support} />
         </div>
 
@@ -187,13 +226,13 @@ export function SiteFooter() {
         <div className="mt-16 flex flex-col gap-5 border-t border-white/10 pt-7 text-[11px] font-bold uppercase tracking-[0.18em] text-white md:flex-row md:items-center md:justify-between">
           <span>© {new Date().getFullYear()} Virat Sports. Never Give Up.</span>
           <div className="flex flex-wrap gap-6">
-            <Link href="/#contact-us" className="transition-colors hover:text-[#e51717]">
+            <Link href="/privacy" className="transition-colors hover:text-[#e51717]">
               Privacy Policy
             </Link>
-            <Link href="/#contact-us" className="transition-colors hover:text-[#e51717]">
+            <Link href="/terms" className="transition-colors hover:text-[#e51717]">
               Terms &amp; Conditions
             </Link>
-            <Link href="/#contact-us" className="transition-colors hover:text-[#e51717]">
+            <Link href="/cookie-policy" className="transition-colors hover:text-[#e51717]">
               Cookie Policy
             </Link>
           </div>

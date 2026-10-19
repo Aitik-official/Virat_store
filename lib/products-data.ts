@@ -1,9 +1,22 @@
+export type ReviewItem = {
+  id: string
+  author: string
+  rating: number
+  date: string
+  title?: string
+  comment: string
+  verified?: boolean
+  helpfulCount?: number
+}
+
 export type Product = {
   id: string
   name: string
   slug: string
   gender: 'men' | 'women' | 'unisex'
   category: string
+  mainCategory?: string
+  subCategory?: string
   sport: string
   price: number
   originalPrice?: number
@@ -13,10 +26,13 @@ export type Product = {
   description: string
   features: string[]
   sizes: string[]
-  colors: { name: string; hex: string }[]
+  colors: { name: string; hex: string; image?: string }[]
   inStock: boolean
   rating: number
   reviewsCount: number
+  reviews?: ReviewItem[]
+  videoUrl?: string
+  actionVideoUrl?: string
 }
 
 export const products: Product[] = [
@@ -39,6 +55,38 @@ export const products: Product[] = [
     inStock: true,
     rating: 4.9,
     reviewsCount: 142,
+    reviews: [
+      {
+        id: 'rev-1',
+        author: 'Arjun K.',
+        rating: 5,
+        date: '2026-09-28',
+        title: 'Top notch match jersey - superb airflow',
+        comment: 'Wore this in a 45-over league match under the afternoon sun. Fabric is featherlight, stays dry, and zero chafing while diving.',
+        verified: true,
+        helpfulCount: 29,
+      },
+      {
+        id: 'rev-2',
+        author: 'Rohan Sharma',
+        rating: 5,
+        date: '2026-10-04',
+        title: 'International quality feel',
+        comment: 'Color and finish look identical to what Virat wears on TV. The stitch quality around the shoulders and neck collar is top tier.',
+        verified: true,
+        helpfulCount: 18,
+      },
+      {
+        id: 'rev-3',
+        author: 'Vikram Patel',
+        rating: 4,
+        date: '2026-10-11',
+        title: 'Great athletic cut',
+        comment: 'Fits true to size for athletic builds. If you prefer a loose relaxed cut, consider sizing up one step.',
+        verified: true,
+        helpfulCount: 11,
+      },
+    ],
   },
   {
     id: 'virat-women-elite-polo',

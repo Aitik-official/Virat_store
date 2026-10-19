@@ -1,47 +1,198 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Filter, RotateCcw, SlidersHorizontal, Star } from 'lucide-react'
-import { categoryOptions, genderOptions, products, sportOptions, type Product } from '@/lib/products-data'
+import { categoryOptions, genderOptions, products as defaultProducts, sportOptions, type Product } from '@/lib/products-data'
 
 export function ProductsClient() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
-  const initialGender = searchParams.get('gender') || 'all'
-  const initialCategory = searchParams.get('category') || 'all'
-  const initialSport = searchParams.get('sport') || 'all'
-  const initialSearch = searchParams.get('search') || ''
+  const [productsList, setProductsList] = useState<Product[]>(defaultProducts)
 
-  const [selectedGender, setSelectedGender] = useState<string>(initialGender)
-  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
-  const [selectedSport, setSelectedSport] = useState<string>(initialSport)
-  const [search, setSearch] = useState<string>(initialSearch)
+  // Reactive state derived from searchParams so navbar links update the page immediately
+  const paramGender = searchParams.get('gender') || 'all'
+  const paramCategory = searchParams.get('category') || 'all'
+  const paramSport = searchParams.get('sport') || 'all'
+  const paramSearch = searchParams.get('search') || ''
+  const paramBadge = searchParams.get('badge') || ''
+  const paramOutlet = searchParams.get('outlet') === 'true'
+  const paramStock = searchParams.get('stock') || 'all'
+
+  const [selectedGender, setSelectedGender] = useState<string>(paramGender)
+  const [selectedCategory, setSelectedCategory] = useState<string>(paramCategory)
+  const [selectedSport, setSelectedSport] = useState<string>(paramSport)
+  const [search, setSearch] = useState<string>(paramSearch)
+  const [selectedBadge, setSelectedBadge] = useState<string>(paramBadge)
+  const [selectedOutlet, setSelectedOutlet] = useState<boolean>(paramOutlet)
+  const [selectedStock, setSelectedStock] = useState<string>(paramStock)
   const [sortBy, setSortBy] = useState<string>('featured')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
 
+  // Whenever the URL changes (e.g. clicking navbar dropdown items), sync states immediately
+  useEffect(() => {
+    setSelectedGender(searchParams.get('gender') || 'all')
+    setSelectedCategory(searchParams.get('category') || 'all')
+    setSelectedSport(searchParams.get('sport') || 'all')
+    setSearch(searchParams.get('search') || '')
+    setSelectedBadge(searchParams.get('badge') || '')
+    setSelectedOutlet(searchParams.get('outlet') === 'true')
+    setSelectedStock(searchParams.get('stock') || 'all')
+  }, [searchParams])
+
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const stored = localStorage.getItem('virat_admin_products_v1')
+        if (stored) setProductsList(JSON.parse(stored))
+      } catch {}
+    }
+    sync()
+
+    fetch('/api/products')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.products && Array.isArray(data.products)) {
+          setProductsList(data.products)
+          try {
+            localStorage.setItem('virat_admin_products_v1', JSON.stringify(data.products))
+          } catch {}
+        }
+      })
+      .catch(() => {})
+
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
+
+  // Helper to update URL query params when sidebar filters change
+  const updateQuery = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString())
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === 'all' || value === 'false') {
+        params.delete(key)
+      } else {
+        params.set(key, value)
+      }
+    })
+    const queryString = params.toString()
+    router.push(queryString ? `/products?${queryString}` : '/products')
+  }
+
+  const handleGenderChange = (val: string) => {
+    setSelectedGender(val)
+    updateQuery({ gender: val })
+  }
+
+  const handleSportChange = (val: string) => {
+    setSelectedSport(val)
+    updateQuery({ sport: val })
+  }
+
+  const handleCategoryChange = (val: string) => {
+    setSelectedCategory(val)
+    updateQuery({ category: val })
+  }
+
+  const handleSearchSubmit = (val: string) => {
+    setSearch(val)
+    updateQuery({ search: val.trim() ? val.trim() : null })
+  }
+
+  const handleStockChange = (val: string) => {
+    setSelectedStock(val)
+    updateQuery({ stock: val !== 'all' ? val : null })
+  }
+
+  const resetFilters = () => {
+    setSelectedGender('all')
+    setSelectedCategory('all')
+    setSelectedSport('all')
+    setSearch('')
+    setSelectedBadge('')
+    setSelectedOutlet(false)
+    setSelectedStock('all')
+    setSortBy('featured')
+    router.push('/products')
+  }
+
   const filteredProducts = useMemo(() => {
-    return products
+    return productsList
       .filter((product) => {
-        if (selectedGender !== 'all' && product.gender !== selectedGender && product.gender !== 'unisex') {
+        // Stock status filter
+        if (selectedStock === 'in_stock' && !product.inStock) {
           return false
         }
-        if (selectedCategory !== 'all' && product.category !== selectedCategory) {
+        if (selectedStock === 'out_of_stock' && product.inStock) {
           return false
         }
-        if (selectedSport !== 'all' && product.sport !== selectedSport) {
-          return false
+        // Gender filter
+        if (selectedGender !== 'all') {
+          const productGender = (product.gender || '').toLowerCase()
+          const filterGender = selectedGender.toLowerCase()
+          if (productGender !== filterGender && productGender !== 'unisex') {
+            return false
+          }
         }
+
+        // Category filter (support category, subCategory, or mainCategory match)
+        if (selectedCategory !== 'all') {
+          const cat = selectedCategory.toLowerCase()
+          const pCat = (product.category || '').toLowerCase()
+          const pSubCat = (product.subCategory || '').toLowerCase()
+          const pMainCat = (product.mainCategory || '').toLowerCase()
+          const matchesCategory = pCat === cat || pSubCat === cat || pMainCat === cat
+          if (!matchesCategory) {
+            return false
+          }
+        }
+
+        // Sport filter (seamlessly match if sport is assigned as sport, category, subCategory, or mainCategory)
+        if (selectedSport !== 'all') {
+          const sp = selectedSport.toLowerCase()
+          const pSport = (product.sport || '').toLowerCase()
+          const pCat = (product.category || '').toLowerCase()
+          const pSubCat = (product.subCategory || '').toLowerCase()
+          const pMainCat = (product.mainCategory || '').toLowerCase()
+          const matchesSport =
+            pSport === sp || pCat === sp || pSubCat === sp || pMainCat === sp
+          if (!matchesSport) {
+            return false
+          }
+        }
+
+        // Badge filter (e.g. badge=new, badge=bestseller, badge=pro)
+        if (selectedBadge) {
+          const badgeLower = selectedBadge.toLowerCase()
+          const pBadge = (product.badge || '').toLowerCase()
+          if (!pBadge.includes(badgeLower)) {
+            return false
+          }
+        }
+
+        // Outlet filter (discounted products with originalPrice > price)
+        if (selectedOutlet) {
+          if (!product.originalPrice || product.originalPrice <= product.price) {
+            return false
+          }
+        }
+
+        // Search filter
         if (search.trim()) {
           const q = search.toLowerCase()
-          return (
-            product.name.toLowerCase().includes(q) ||
-            product.description.toLowerCase().includes(q) ||
-            product.category.toLowerCase().includes(q)
-          )
+          const matchName = product.name.toLowerCase().includes(q)
+          const matchDesc = (product.description || '').toLowerCase().includes(q)
+          const matchCat = (product.category || '').toLowerCase().includes(q)
+          const matchSubCat = (product.subCategory || '').toLowerCase().includes(q)
+          const matchSport = (product.sport || '').toLowerCase().includes(q)
+          if (!matchName && !matchDesc && !matchCat && !matchSubCat && !matchSport) {
+            return false
+          }
         }
+
         return true
       })
       .sort((a, b) => {
@@ -50,15 +201,7 @@ export function ProductsClient() {
         if (sortBy === 'rating') return b.rating - a.rating
         return 0 // featured default
       })
-  }, [selectedGender, selectedCategory, selectedSport, search, sortBy])
-
-  const resetFilters = () => {
-    setSelectedGender('all')
-    setSelectedCategory('all')
-    setSelectedSport('all')
-    setSearch('')
-    setSortBy('featured')
-  }
+  }, [productsList, selectedGender, selectedCategory, selectedSport, selectedBadge, selectedOutlet, search, sortBy])
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-12">
@@ -68,16 +211,50 @@ export function ProductsClient() {
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <Link href="/" className="hover:text-[#080d2d]">Home</Link>
             <span>/</span>
-            <span className="text-[#e51717]">Products</span>
+            <Link href="/products" className="text-[#e51717] hover:underline">Products</Link>
             {selectedGender !== 'all' && (
               <>
                 <span>/</span>
                 <span className="text-[#080d2d] uppercase">{selectedGender}</span>
               </>
             )}
+            {selectedSport !== 'all' && (
+              <>
+                <span>/</span>
+                <span className="text-[#080d2d] uppercase">{selectedSport}</span>
+              </>
+            )}
+            {selectedCategory !== 'all' && (
+              <>
+                <span>/</span>
+                <span className="text-[#080d2d] uppercase">{selectedCategory.replace(/-/g, ' ')}</span>
+              </>
+            )}
+            {selectedBadge && (
+              <>
+                <span>/</span>
+                <span className="text-[#e51717] uppercase font-bold">{selectedBadge}</span>
+              </>
+            )}
+            {selectedOutlet && (
+              <>
+                <span>/</span>
+                <span className="text-[#e51717] uppercase font-bold">Outlet</span>
+              </>
+            )}
           </div>
           <h1 className="mt-1 text-2xl font-black uppercase tracking-tight text-[#080d2d] sm:text-3xl">
-            {selectedGender !== 'all' ? `${selectedGender}’s Collection` : 'All Products'}
+            {selectedBadge
+              ? `${selectedBadge.toUpperCase()} COLLECTION`
+              : selectedOutlet
+              ? 'OUTLET & CLEARANCE'
+              : selectedCategory !== 'all'
+              ? `${selectedCategory.replace(/-/g, ' ')}`
+              : selectedSport !== 'all'
+              ? `${selectedSport} Collection`
+              : selectedGender !== 'all'
+              ? `${selectedGender}’s Collection`
+              : 'All Products'}
             <span className="ml-2.5 text-base font-bold text-[#e51717]">({filteredProducts.length})</span>
           </h1>
         </div>
@@ -88,7 +265,7 @@ export function ProductsClient() {
             type="text"
             placeholder="Filter by keyword..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchSubmit(e.target.value)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-[#080d2d] outline-none focus:border-[#e51717]"
           />
 
@@ -143,7 +320,7 @@ export function ProductsClient() {
                     type="radio"
                     name="gender"
                     checked={selectedGender === g.value}
-                    onChange={() => setSelectedGender(g.value)}
+                    onChange={() => handleGenderChange(g.value)}
                     className="accent-[#e51717]"
                   />
                   <span>{g.label}</span>
@@ -165,13 +342,59 @@ export function ProductsClient() {
                     type="radio"
                     name="sport"
                     checked={selectedSport === s.value}
-                    onChange={() => setSelectedSport(s.value)}
+                    onChange={() => handleSportChange(s.value)}
                     className="accent-[#e51717]"
                   />
                   <span>{s.label}</span>
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Availability / Stock Status Filter */}
+          <div className="space-y-2 border-b border-slate-200 pb-5">
+            <h3 className="text-[11px] font-black uppercase tracking-wider text-[#080d2d]">Availability</h3>
+            <div className="flex flex-col gap-1.5">
+              {[
+                { label: 'All Items', value: 'all' },
+                { label: 'In Stock Only', value: 'in_stock' },
+                { label: 'Out of Stock', value: 'out_of_stock' },
+              ].map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex cursor-pointer items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#080d2d]"
+                >
+                  <input
+                    type="radio"
+                    name="stock"
+                    checked={selectedStock === opt.value}
+                    onChange={() => handleStockChange(opt.value)}
+                    className="accent-[#e51717]"
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Deals & Offers Filter */}
+          <div className="space-y-2 border-b border-slate-200 pb-5">
+            <h3 className="text-[11px] font-black uppercase tracking-wider text-[#080d2d]">Deals &amp; Offers</h3>
+            <label className="flex cursor-pointer items-center gap-2.5 text-xs font-bold text-slate-700 transition-colors hover:text-[#e51717]">
+              <input
+                type="checkbox"
+                checked={selectedOutlet}
+                onChange={(e) => {
+                  setSelectedOutlet(e.target.checked)
+                  updateQuery({ outlet: e.target.checked ? 'true' : null })
+                }}
+                className="size-4 accent-[#e51717] rounded"
+              />
+              <span className="flex items-center gap-1.5">
+                <span>On Sale / Outlet</span>
+                <span className="rounded bg-rose-100 px-1.5 py-0.2 text-[9px] font-black text-[#e51717]">SALE</span>
+              </span>
+            </label>
           </div>
 
           {/* Category Filter */}
@@ -187,7 +410,7 @@ export function ProductsClient() {
                     type="radio"
                     name="category"
                     checked={selectedCategory === cat.value}
-                    onChange={() => setSelectedCategory(cat.value)}
+                    onChange={() => handleCategoryChange(cat.value)}
                     className="accent-[#e51717]"
                   />
                   <span>{cat.label}</span>
@@ -219,7 +442,7 @@ export function ProductsClient() {
                           type="radio"
                           name="mobile-gender"
                           checked={selectedGender === g.value}
-                          onChange={() => setSelectedGender(g.value)}
+                          onChange={() => handleGenderChange(g.value)}
                           className="accent-[#e51717]"
                         />
                         {g.label}
@@ -238,12 +461,55 @@ export function ProductsClient() {
                           type="radio"
                           name="mobile-sport"
                           checked={selectedSport === s.value}
-                          onChange={() => setSelectedSport(s.value)}
+                          onChange={() => handleSportChange(s.value)}
                           className="accent-[#e51717]"
                         />
                         {s.label}
                       </label>
                     ))}
+                  </div>
+                </div>
+
+                {/* Availability / Stock */}
+                <div className="border-b border-slate-100 pb-3">
+                  <p className="text-xs font-black uppercase text-[#080d2d]">Availability</p>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {[
+                      { label: 'All Items', value: 'all' },
+                      { label: 'In Stock Only', value: 'in_stock' },
+                      { label: 'Out of Stock', value: 'out_of_stock' },
+                    ].map((opt) => (
+                      <label key={opt.value} className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                        <input
+                          type="radio"
+                          name="mobile-stock"
+                          checked={selectedStock === opt.value}
+                          onChange={() => handleStockChange(opt.value)}
+                          className="accent-[#e51717]"
+                        />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deals & Offers */}
+                <div className="border-b border-slate-100 pb-3">
+                  <p className="text-xs font-black uppercase text-[#080d2d]">Deals &amp; Offers</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedOutlet}
+                        onChange={(e) => {
+                          setSelectedOutlet(e.target.checked)
+                          updateQuery({ outlet: e.target.checked ? 'true' : null })
+                        }}
+                        className="size-4 accent-[#e51717] rounded"
+                      />
+                      <span>On Sale / Outlet</span>
+                      <span className="rounded bg-rose-100 px-1 py-0.2 text-[9px] font-black text-[#e51717]">SALE</span>
+                    </label>
                   </div>
                 </div>
 
@@ -257,7 +523,7 @@ export function ProductsClient() {
                           type="radio"
                           name="mobile-category"
                           checked={selectedCategory === c.value}
-                          onChange={() => setSelectedCategory(c.value)}
+                          onChange={() => handleCategoryChange(c.value)}
                           className="accent-[#e51717]"
                         />
                         {c.label}
@@ -313,24 +579,38 @@ function ProductCard({ product }: { product: Product }) {
     >
       {/* Product Image Stage */}
       <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-b from-[#f9fafb] to-[#f1f3f6]">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-contain p-4 transition-transform duration-500 ease-out group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 33vw"
-        />
+        {product.image ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className={`object-contain p-4 transition-transform duration-500 ease-out group-hover:scale-105 ${
+              !product.inStock ? 'grayscale opacity-75' : ''
+            }`}
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-slate-300">
+            <ShoppingBag className="w-10 h-10 mb-1 opacity-50" />
+            <span className="text-[10px] uppercase font-bold text-slate-400">No Image</span>
+          </div>
+        )}
 
-        {/* Badge */}
-        {product.badge && (
+        {/* Badges: Out of Stock or Promotional */}
+        {!product.inStock ? (
+          <span className="absolute left-3 top-3 rounded-md bg-[#080d2d] border border-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
+            Out of Stock
+          </span>
+        ) : product.badge ? (
           <span className="absolute left-3 top-3 rounded-md bg-[#e51717] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
             {product.badge}
           </span>
-        )}
+        ) : null}
 
         {/* Quick View Tag on hover */}
         <div className="absolute inset-x-3 bottom-3 flex items-center justify-center rounded-lg bg-[#080d2d]/90 py-2 text-xs font-black uppercase tracking-wider text-white opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100">
-          View Product Details
+          {product.inStock ? 'View Product Details' : 'View (Out of Stock)'}
         </div>
       </div>
 

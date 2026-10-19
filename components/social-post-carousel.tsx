@@ -127,8 +127,33 @@ export function SocialPostCarousel({ posts }: { posts: SocialPost[] }) {
     setActive((c) => (c <= 0 ? maxIndex : c - 1))
   }
 
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const minSwipeDistance = 40
+    if (distance > minSwipeDistance) {
+      next()
+    } else if (distance < -minSwipeDistance) {
+      previous()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   return (
-    <section id="see-it-in-action" className="border-b border-slate-200 bg-[#f7f8f5] px-4 py-6 sm:px-6 md:px-12 md:py-10">
+    <section id="see-it-in-action" className="border-b border-slate-200 bg-[#f7f8f5] px-4 py-6 sm:px-6 md:px-12 md:py-10 select-none">
       <div className="mx-auto max-w-6xl">
 
         {/* Section header + nav arrows on same row (arrows hidden on mobile) */}
@@ -169,7 +194,12 @@ export function SocialPostCarousel({ posts }: { posts: SocialPost[] }) {
         </div>
 
         {/* Slide track — mobile: 1 card at a time (w-full); sm: 2 cards; md+: 4 cards */}
-        <div className="overflow-hidden">
+        <div
+          className="overflow-hidden touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             className="flex transition-transform duration-500 ease-out"
             style={{

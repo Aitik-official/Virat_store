@@ -13,64 +13,81 @@ export type MegaMenuData = {
 
 export const menWomenColumns: MegaMenuCategory[] = [
   {
-    title: 'SHOP BY CATEGORY',
+    title: 'TOPS & UPPERWEAR',
     items: [
-      { label: 'TOPS', href: '/products?category=tops' },
+      { label: 'TOPS & MATCH JERSEYS', href: '/products?category=tops' },
       { label: 'POLOS', href: '/products?category=polos' },
       { label: 'SLEEVELESS', href: '/products?category=sleeveless' },
       { label: 'LONG SLEEVES', href: '/products?category=long-sleeves' },
-      { label: 'JACKET AND HOODIES', href: '/products?category=jacket-and-hoodies' },
+      { label: 'JACKETS AND HOODIES', href: '/products?category=jacket-and-hoodies' },
+    ],
+  },
+  {
+    title: 'BOTTOMS & LOWERWEAR',
+    items: [
       { label: 'SHORTS', href: '/products?category=shorts' },
       { label: 'PANTS AND LEGGINGS', href: '/products?category=pants-and-leggings' },
       { label: 'TRACKSUITS', href: '/products?category=tracksuits' },
+      { label: 'COMPRESSION BASELAYERS', href: '/products?category=compression-and-baselayers' },
     ],
   },
   {
-    title: 'SHOP BY SPORT',
+    title: 'COLLECTIONS',
     items: [
-      { label: 'CRICKET', href: '/products?sport=cricket' },
-      { label: 'FOOTBALL', href: '/products?sport=football' },
-      { label: 'SHOOTING', href: '/products?sport=shooting' },
-      { label: 'TRAINING', href: '/products?sport=training' },
-      { label: 'INDIA MERCHANDISE', href: '/products?sport=india-merchandise' },
-      { label: 'SHOP OUTLET', href: '/products?outlet=true' },
-    ],
-  },
-  {
-    title: 'ACCESSORIES',
-    items: [
-      { label: 'COMPRESSION AND BASELAYERS', href: '/products?category=compression-and-baselayers' },
+      { label: 'NEW ARRIVALS', href: '/products?badge=new' },
+      { label: 'BESTSELLERS', href: '/products?badge=bestseller' },
+      { label: 'PRO GRADE SPEC', href: '/products?badge=pro' },
+      { label: 'OUTLET & DEALS', href: '/products?outlet=true' },
     ],
   },
 ]
 
 export const cricketColumns: MegaMenuCategory[] = [
   {
-    title: 'SHOP CRICKET',
+    title: 'CRICKET GEAR & PROTECTION',
     items: [
       { label: 'CRICKET HELMETS', href: '/products?category=cricket-helmets&sport=cricket' },
-      { label: 'CLOTHING', href: '/products?category=clothing&sport=cricket' },
-      { label: 'CRICKET BALLS', href: '/products?category=cricket-balls&sport=cricket' },
-      { label: 'BAGS AND DUFFLES', href: '/products?category=bags-and-duffles&sport=cricket' },
-      { label: 'ACCESSORIES', href: '/products?category=accessories&sport=cricket' },
-      { label: 'SHOES', href: '/products?category=shoes&sport=cricket' },
-      { label: 'SHOP OUTLET', href: '/products?sport=cricket&outlet=true' },
+      { label: 'MATCH CLOTHING', href: '/products?category=clothing&sport=cricket' },
+      { label: 'LEATHER MATCH BALLS', href: '/products?category=cricket-balls&sport=cricket' },
+      { label: 'KITBAGS & DUFFLES', href: '/products?category=bags-and-duffles&sport=cricket' },
+      { label: 'CRICKET SHOES & SPIKES', href: '/products?category=shoes&sport=cricket' },
+      { label: 'CRICKET ACCESSORIES', href: '/products?category=accessories&sport=cricket' },
+    ],
+  },
+  {
+    title: 'CRICKET COLLECTIONS',
+    items: [
+      { label: 'TEST MATCH RANGE', href: '/products?category=clothing&sport=cricket' },
+      { label: 'T20 MATCH JERSEYS', href: '/products?category=tops&sport=cricket' },
+      { label: 'CRICKET BESTSELLERS', href: '/products?sport=cricket&badge=bestseller' },
+      { label: 'CRICKET OUTLET', href: '/products?sport=cricket&outlet=true' },
     ],
   },
 ]
 
 export const accessoriesColumns: MegaMenuCategory[] = [
   {
-    title: 'SHOP ACCESSORIES',
+    title: 'BAGS & CARRY GEAR',
     items: [
       { label: 'BAGS AND DUFFLES', href: '/products?category=bags-and-duffles' },
       { label: 'HATS AND CAPS', href: '/products?category=hats-and-caps' },
-      { label: 'SOCKS', href: '/products?category=socks' },
-      { label: 'SUPPORTERS', href: '/products?category=supporters' },
-      { label: 'COMPRESSION AND BASELAYERS', href: '/products?category=compression-and-baselayers' },
-      { label: 'SHOES', href: '/products?category=shoes' },
+      { label: 'SOCKS & SLEEVES', href: '/products?category=socks' },
+    ],
+  },
+  {
+    title: 'FITNESS & RECOVERY',
+    items: [
+      { label: 'SUPPORTERS & GUARDS', href: '/products?category=supporters' },
+      { label: 'COMPRESSION & BASELAYERS', href: '/products?category=compression-and-baselayers' },
       { label: 'RECOVERY FOAM ROLLERS', href: '/products?category=recovery-foam-rollers' },
-      { label: 'LOOP BANDS AND SUPPORT', href: '/products?category=loop-bands-and-support' },
+      { label: 'LOOP BANDS & SUPPORT', href: '/products?category=loop-bands-and-support' },
+    ],
+  },
+  {
+    title: 'FOOTWEAR',
+    items: [
+      { label: 'ATHLETIC SHOES', href: '/products?category=shoes' },
+      { label: 'PRO TURF SHOES', href: '/products?category=shoes' },
     ],
   },
 ]
@@ -112,7 +129,7 @@ export const megaMenus: Record<string, MegaMenuData> = {
   ACCESSORIES: {
     label: 'ACCESSORIES',
     exploreTitle: 'ACCESSORIES',
-    exploreHref: '/products?sport=accessories',
+    exploreHref: '/products?category=accessories',
     watermarkText: 'DESIGN\nYOUR OWN.',
     columns: accessoriesColumns,
   },

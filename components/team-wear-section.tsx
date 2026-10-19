@@ -3,36 +3,48 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { getActiveSiteAssets, defaultSiteAssets } from '@/lib/site-assets'
 
 export interface TeamwearSlide {
   image: string
   alt?: string
 }
 
-const DEFAULT_SLIDES: TeamwearSlide[] = [
-  {
-    image: '/images/TeamWear/TeamWear4.png',
-    alt: 'Virat Elite Match Gear',
-  },
-  {
-    image: '/images/TeamWear/TeamWear1.png',
-    alt: 'Virat Custom Teamwear',
-  },
-  {
-    image: '/images/TeamWear/TeamWear2.png',
-    alt: 'Virat Team Kits and Apparel',
-  },
-  {
-    image: '/images/TeamWear/TeamWare3.png',
-    alt: 'Virat Professional Club Wear',
-  },
-]
+const DEFAULT_SLIDES: TeamwearSlide[] = defaultSiteAssets.teamwearSlides.map((img) => ({
+  image: img,
+  alt: 'Virat Custom Teamwear Gear',
+}))
 
 export function TeamWearSection({
-  slides = DEFAULT_SLIDES,
+  slides: initialSlides,
 }: {
   slides?: TeamwearSlide[]
 }) {
+  const [slides, setSlides] = useState<TeamwearSlide[]>(initialSlides || DEFAULT_SLIDES)
+
+  useEffect(() => {
+    if (initialSlides) return
+    const update = () => {
+      const active = getActiveSiteAssets()
+      if (active.teamwearSlides?.length) {
+        setSlides(active.teamwearSlides.map((img) => ({ image: img, alt: 'Virat Custom Teamwear' })))
+      }
+    }
+    update()
+
+    fetch('/api/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.media?.teamwearSlides?.length > 0) {
+          setSlides(data.media.teamwearSlides.map((img: string) => ({ image: img, alt: 'Virat Custom Teamwear' })))
+        }
+      })
+      .catch(() => {})
+
+    window.addEventListener('storage', update)
+    return () => window.removeEventListener('storage', update)
+  }, [initialSlides])
+
   const [active, setActive] = useState(0)
   const total = slides.length
 
@@ -45,6 +57,31 @@ export function TeamWearSection({
     const timer = setInterval(next, 5000)
     return () => clearInterval(timer)
   }, [total])
+
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const minSwipeDistance = 40
+    if (distance > minSwipeDistance) {
+      next()
+    } else if (distance < -minSwipeDistance) {
+      previous()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
 
   return (
     <section id="team-wear" className="w-full border-b border-slate-200 bg-[#f9fafb] px-4 py-6 sm:px-6 md:py-8" aria-label="Team Wear Section">
@@ -68,7 +105,12 @@ export function TeamWearSection({
         </div>
 
         {/* 2. Scaled-up Responsive Slider Card with minimal top gap */}
-        <div className="group relative mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200/90 bg-[#080d2d] shadow-xl transition-all duration-500 hover:shadow-2xl sm:mt-4 sm:rounded-2xl">
+        <div
+          className="group relative mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200/90 bg-[#080d2d] shadow-xl transition-all duration-500 hover:shadow-2xl sm:mt-4 sm:rounded-2xl select-none touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Aspect ratio precisely tailored to TeamWear4 (1600x1000 = 16:10) so it displays fully without cropping */}
           <div className="relative aspect-[16/10] w-full">
             {slides.map((slide, index) => {

@@ -84,7 +84,7 @@ function StepIndicator({ current }: { current: Step }) {
             </div>
             {i < steps.length - 1 && (
               <div
-                className={`mx-3 h-0.5 w-16 sm:w-24 transition-all duration-500 ${
+                className={`mx-1.5 sm:mx-3 h-0.5 w-8 sm:w-20 transition-all duration-500 ${
                   done ? 'bg-emerald-500' : 'bg-slate-200'
                 }`}
               />
@@ -521,8 +521,16 @@ function PaymentStep({
 }
 
 /* ─── Step: Confirmed ──────────────────────────────────────────── */
-function ConfirmedStep({ details, grandTotal }: { details: DeliveryDetails; grandTotal: number }) {
-  const orderNumber = `VS${Date.now().toString().slice(-8).toUpperCase()}`
+function ConfirmedStep({
+  details,
+  grandTotal,
+  orderNumber,
+}: {
+  details: DeliveryDetails
+  grandTotal: number
+  orderNumber: string
+}) {
+  const displayOrderNum = orderNumber || `VS${Date.now().toString().slice(-8).toUpperCase()}`
   return (
     <div className="py-12 text-center space-y-6">
       {/* Animated tick */}
@@ -545,7 +553,7 @@ function ConfirmedStep({ details, grandTotal }: { details: DeliveryDetails; gran
         </div>
         <div className="flex justify-between text-xs">
           <span className="text-slate-500">Order Number</span>
-          <span className="font-black text-[#080d2d]">#{orderNumber}</span>
+          <span className="font-black text-[#080d2d]">#{displayOrderNum}</span>
         </div>
         <div className="flex justify-between text-xs">
           <span className="text-slate-500">Amount Paid</span>
@@ -669,14 +677,71 @@ export function CheckoutClient() {
     }
   }
 
-  const handlePlaceOrder = () => {
+  const [confirmedOrderNumber, setConfirmedOrderNumber] = useState('')
+
+  const handlePlaceOrder = async () => {
     setIsPlacing(true)
     setGrandTotalSnapshot(grandTotal)
+
+    const generatedOrderNumber = `VS${Date.now().toString().slice(-8).toUpperCase()}`
+    const orderPayload = {
+      orderNumber: generatedOrderNumber,
+      customer: details,
+      items: items.map((item) => ({
+        productId: item.product.id || item.product.slug,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        image: item.product.image,
+      })),
+      subtotal,
+      discount,
+      shipping,
+      codFee: payment.method === 'cod' ? 50 : 0,
+      grandTotal: grandTotal + (payment.method === 'cod' ? 50 : 0),
+      paymentMethod: payment.method,
+    }
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      })
+      const data = await res.json()
+      if (data?.orderNumber) {
+        setConfirmedOrderNumber(data.orderNumber)
+      } else {
+        setConfirmedOrderNumber(generatedOrderNumber)
+      }
+    } catch {
+      setConfirmedOrderNumber(generatedOrderNumber)
+    }
+
+    // Always keep local order history for offline backup
+    try {
+      const existing = JSON.parse(localStorage.getItem('virat_store_orders_v1') || '[]')
+      localStorage.setItem(
+        'virat_store_orders_v1',
+        JSON.stringify([
+          {
+            ...orderPayload,
+            _id: generatedOrderNumber,
+            createdAt: new Date().toISOString(),
+            orderStatus: 'placed',
+          },
+          ...existing,
+        ])
+      )
+    } catch {}
+
     setTimeout(() => {
       setIsPlacing(false)
       clearCart()
       setStep('confirmed')
-    }, 1800)
+    }, 1200)
   }
 
   /* Empty cart guard */
@@ -716,7 +781,11 @@ export function CheckoutClient() {
       <StepIndicator current={step} />
 
       {step === 'confirmed' ? (
-        <ConfirmedStep details={details} grandTotal={grandTotalSnapshot} />
+        <ConfirmedStep
+          details={details}
+          grandTotal={grandTotalSnapshot}
+          orderNumber={confirmedOrderNumber}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* Left: active step */}

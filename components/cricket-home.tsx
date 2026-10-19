@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronDown, ChevronLeft, ChevronRight, Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react'
-import { siteAssets, validSources, type ImageSlot, type PromotionalSlide } from '@/lib/site-assets'
+import { siteAssets, getActiveSiteAssets, validSources, type ImageSlot, type PromotionalSlide, type SiteMediaAssets } from '@/lib/site-assets'
 
 function AssetSlot({ src, alt, className = '', contain = false }: { src?: string; alt: string; className?: string; contain?: boolean }) {
   if (!src?.trim()) return <div aria-label={`${alt} image placeholder`} className={`bg-[#f3f4f6] ${className}`} />
@@ -164,18 +164,69 @@ export function SectionHeading({ children, subtitle }: { children: React.ReactNo
 }
 
 export function HeroSlider() {
-  const slides = validSources(siteAssets.heroBanners)
+  const [assets, setAssets] = useState<SiteMediaAssets>(siteAssets)
+
+  useEffect(() => {
+    setAssets(getActiveSiteAssets())
+    const sync = () => setAssets(getActiveSiteAssets())
+
+    // Direct sync from database API
+    fetch('/api/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.media?.heroBanners?.length > 0) {
+          setAssets((prev) => ({ ...prev, ...data.media }))
+        }
+      })
+      .catch(() => {})
+
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
+
+  const slides = validSources(assets.heroBanners)
   const [active, setActive] = useState(0)
   const reduced = useReducedMotion()
-  const next = () => setActive((current) => (current + 1) % slides.length)
-  const previous = () => setActive((current) => (current - 1 + slides.length) % slides.length)
+  const next = () => setActive((current) => (current + 1) % (slides.length || 1))
+  const previous = () => setActive((current) => (current - 1 + (slides.length || 1)) % (slides.length || 1))
   useAutoplay(next, 5000, slides.length > 1 && !reduced)
 
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const minSwipeDistance = 40
+    if (distance > minSwipeDistance) {
+      next()
+    } else if (distance < -minSwipeDistance) {
+      previous()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   return (
-    <section className="group relative aspect-[16/10] sm:aspect-[2/1] md:aspect-[2.4/1] w-full overflow-hidden border-b border-slate-200 bg-[#080d2d]" aria-label="Hero banner">
+    <section
+      className="group relative aspect-[2.1/1] sm:aspect-[2.2/1] md:aspect-[2.4/1] w-full overflow-hidden border-b border-slate-200 bg-[#080d2d] select-none touch-pan-y"
+      aria-label="Hero banner"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {slides.length ? slides.map((src, index) => (
         <div
-          key={src}
+          key={`${src}-${index}`}
           className={`absolute inset-0 transition-all duration-1000 ease-out ${index === active
             ? 'scale-100 opacity-100'
             : 'scale-105 opacity-0 pointer-events-none'
@@ -186,7 +237,7 @@ export function HeroSlider() {
             alt={`Virat Sports Performance Campaign ${index + 1}`}
             fill
             priority={index === 0}
-            className="object-cover object-center"
+            className="object-contain sm:object-cover object-center pointer-events-none"
             sizes="100vw"
           />
         </div>
@@ -287,13 +338,70 @@ function PromoSlide({ slide }: { slide: PromotionalSlide }) {
 }
 
 export function PromotionalSlider() {
-  const slides = siteAssets.promotionalSlides.filter((slide) => slide.findGame?.trim() || slide.cricketAction?.trim() || siteAssets.promotionalSlides.length === 1)
+  const [assets, setAssets] = useState<SiteMediaAssets>(siteAssets)
+
+  useEffect(() => {
+    setAssets(getActiveSiteAssets())
+    const sync = () => setAssets(getActiveSiteAssets())
+
+    fetch('/api/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.media?.promotionalSection) {
+          setAssets((prev) => ({ ...prev, ...data.media }))
+        }
+      })
+      .catch(() => {})
+
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
+
+  const promoSlide: PromotionalSlide = {
+    findGame: assets.promotionalSection?.leftPoster || '/images/Rohit.jpeg',
+    cricketAction: assets.promotionalSection?.rightPoster || '/images/SKY.jpeg',
+  }
+
+  const slides = [promoSlide]
   const [active, setActive] = useState(0)
   const reduced = useReducedMotion()
   const next = () => setActive((current) => (current + 1) % Math.max(slides.length, 1))
+  const previous = () => setActive((current) => (current - 1 + Math.max(slides.length, 1)) % Math.max(slides.length, 1))
   useAutoplay(next, 6000, slides.length > 1 && !reduced)
+
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const minSwipeDistance = 40
+    if (distance > minSwipeDistance) {
+      next()
+    } else if (distance < -minSwipeDistance) {
+      previous()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   return (
-    <section id="find-your-game" className="relative overflow-hidden border-b border-slate-200">
+    <section
+      id="find-your-game"
+      className="relative overflow-hidden border-b border-slate-200 select-none touch-pan-y"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div
         className={`flex ${reduced ? '' : 'transition-transform duration-700 ease-out'}`}
         style={{ transform: `translateX(-${active * 100}%)` }}
@@ -327,14 +435,33 @@ export function CategoryGrid() {
     return () => observer.disconnect()
   }, [])
 
-  const categories = [
-    ['MEN’S', siteAssets.categories.men],
-    ['WOMEN', siteAssets.categories.women],
-    ['YOUTH', siteAssets.categories.youth],
-    ['CAP', siteAssets.categories.cap],
-    ['BAG & KITBAG RANGE', siteAssets.categories.kitbags],
-    ['ACCESSORIES', siteAssets.categories.accessories],
-  ] as const
+    const [assets, setAssets] = useState<SiteMediaAssets>(siteAssets)
+
+    useEffect(() => {
+      setAssets(getActiveSiteAssets())
+      const sync = () => setAssets(getActiveSiteAssets())
+
+      fetch('/api/media')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.media?.categories) {
+            setAssets((prev) => ({ ...prev, ...data.media }))
+          }
+        })
+        .catch(() => {})
+
+      window.addEventListener('storage', sync)
+      return () => window.removeEventListener('storage', sync)
+    }, [])
+
+    const categories = [
+      { name: 'MEN’S', src: assets.categories.men, href: '/products?gender=men' },
+      { name: 'WOMEN', src: assets.categories.women, href: '/products?gender=women' },
+      { name: 'YOUTH', src: assets.categories.youth, href: '/products?category=youth' },
+      { name: 'CAP', src: assets.categories.cap, href: '/products?category=caps' },
+      { name: 'BAG & KITBAG RANGE', src: assets.categories.kitbags, href: '/products?category=bags' },
+      { name: 'ACCESSORIES', src: assets.categories.accessories, href: '/products?category=accessories' },
+    ]
 
   return (
     <section ref={sectionRef} id="shop-by-category" className="border-b border-slate-200 bg-white">
@@ -346,10 +473,10 @@ export function CategoryGrid() {
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 p-3 sm:p-4 md:grid-cols-3 md:gap-4 md:p-5 lg:gap-5">
-        {categories.map(([name, src], index) => (
+        {categories.map((cat, index) => (
           <Link
-            href={`#${name.toLowerCase().replace(/[^a-z]+/g, '-')}`}
-            key={name}
+            href={cat.href}
+            key={cat.name}
             style={{ transitionDelay: `${visible ? index * 90 : 0}ms` }}
             className={`group relative aspect-[4/3] overflow-hidden rounded-xl border border-transparent p-4 transition-all duration-500 ${visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
               }`}
@@ -357,7 +484,7 @@ export function CategoryGrid() {
             {/* Background container without lines */}
             <div className="absolute inset-0 overflow-hidden rounded-xl bg-gradient-to-b from-[#f8f9fa] to-[#f1f3f6]">
               <div className="relative size-full transition-transform duration-500 ease-out group-hover:scale-105">
-                <AssetSlot src={src} alt={name} contain />
+                <AssetSlot src={cat.src} alt={cat.name} contain />
               </div>
             </div>
 
@@ -370,7 +497,7 @@ export function CategoryGrid() {
             {/* Typography matching theme: Deep Navy + hover to Crimson */}
             <div className="relative z-10 flex items-center justify-between">
               <span className="inline-block rounded bg-white/90 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-[#080d2d] shadow-sm backdrop-blur-sm transition-all duration-300 group-hover:bg-[#080d2d] group-hover:text-white md:text-sm">
-                {name}
+                {cat.name}
               </span>
               <span className="text-[11px] font-black uppercase tracking-wider text-[#e51717] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 -translate-x-2">
                 View →
@@ -384,7 +511,7 @@ export function CategoryGrid() {
 }
 
 export function ActionGalleryCarousel() {
-  const items = siteAssets.actionGallery.filter((item: ImageSlot) => item.src?.trim())
+  const items = ((siteAssets as any).actionGallery || []).filter((item: ImageSlot) => item?.src?.trim())
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
   const reduced = useReducedMotion()
@@ -419,8 +546,33 @@ export function ActionGalleryCarousel() {
   const previous = () => setActive((current) => (current <= 0 ? maxIndex : current - 1))
   useAutoplay(next, 4500, items.length > visibleCount && !reduced, paused)
 
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const minSwipeDistance = 40
+    if (distance > minSwipeDistance) {
+      next()
+    } else if (distance < -minSwipeDistance) {
+      previous()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   return (
-    <section id="see-it-in-action" className="border-b border-slate-200 bg-[#f7f8f5] px-5 py-10 md:px-12 md:py-14">
+    <section id="see-it-in-action" className="border-b border-slate-200 bg-[#f7f8f5] px-5 py-10 md:px-12 md:py-14 select-none">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -440,13 +592,20 @@ export function ActionGalleryCarousel() {
           </div>
         </div>
 
-        <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <div
+          className="relative touch-pan-y"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="overflow-hidden">
             <div
               className="flex transition-transform duration-500 ease-out"
               style={{ transform: `translateX(-${active * (100 / visibleCount)}%)` }}
             >
-              {items.length ? items.map((item, index) => (
+              {items.length ? items.map((item: ImageSlot, index: number) => (
                 <div key={`${item.src}-${index}`} className="w-full shrink-0 px-2 sm:w-1/3 md:w-1/4">
                   <div className="group relative aspect-[0.68] overflow-hidden rounded-xl bg-[#e9ece7]">
                     <div className="relative size-full transition-transform duration-300 group-hover:scale-105">
@@ -491,5 +650,5 @@ export function ActionGalleryCarousel() {
 import { partnerLogos } from '@/lib/partner-logos'
 
 export function CricketHome() {
-  return <div id="top" className="min-h-screen bg-white text-[#101828]"><Header /><main><HeroSlider /><PromotionalSlider /><CategoryGrid /><section id="video" className="border-b border-slate-200 bg-[#f9fafb] px-5 py-12 md:py-16"><SectionHeading subtitle="Unstoppable Spirit">VIRAT IN ACTION</SectionHeading><div className="relative mx-auto mt-6 aspect-video max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-[#080d2d] shadow-2xl"><video src="/videos/display_video.mp4" autoPlay loop muted playsInline className="size-full object-cover" /></div></section><section id="team-wear" className="grid border-b border-slate-300 md:grid-cols-[75%_25%]"><div className="relative aspect-[2.2/1] border-b border-slate-300 md:border-b-0 md:border-r"><AssetSlot src={siteAssets.teamwearBanner} alt="Teamwear campaign" contain /></div><Link href="#trending-products" className="flex min-h-40 items-center justify-center p-6 text-center text-2xl font-black uppercase md:min-h-0 md:text-3xl">Trending products</Link></section><ActionGalleryCarousel /><section id="partners" className="border-b border-slate-300 bg-[#f9fafb] px-4 py-16 sm:px-6 md:py-24"><SectionHeading>OUR PROUD PARTNERS</SectionHeading><div className="mx-auto mt-12 grid max-w-6xl grid-cols-2 items-center justify-items-center gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-6 md:gap-x-8 md:gap-y-12">{partnerLogos.map((partner) => (<div key={partner.id} className="group flex size-full items-center justify-center p-2 transition-transform duration-300 hover:scale-105"><div className="relative flex h-24 w-full max-w-[130px] items-center justify-center sm:h-28 sm:max-w-[140px] md:h-28 md:max-w-[150px]"><Image src={partner.src} alt={partner.name} width={150} height={150} className="max-h-full max-w-full object-contain filter drop-shadow-sm transition-all duration-300 group-hover:brightness-105" /></div></div>))}</div></section><section id="contact-us" className="px-5 py-20 text-center md:py-28"><SectionHeading>Contact us</SectionHeading><div className="mx-auto mt-12 grid max-w-5xl gap-10 text-left text-sm md:grid-cols-4"><div><p className="font-bold uppercase">Contact</p><p className="mt-3 text-slate-500">Email and phone details coming soon.</p></div><div><p className="font-bold uppercase">Explore</p><div className="mt-3 flex flex-col gap-2 text-slate-500"><Link href="#shop-by-category">Categories</Link><Link href="#team-wear">Team wear</Link></div></div><div><p className="font-bold uppercase">Follow</p><p className="mt-3 text-slate-500">Social links coming soon.</p></div><div><p className="font-bold uppercase">Legal</p><p className="mt-3 text-slate-500">Privacy policy · Terms & conditions</p></div></div></section></main><footer className="border-t border-slate-300 px-5 py-6 text-center text-xs text-slate-500">© {new Date().getFullYear()} Virat Sports. All rights reserved.</footer></div>
+  return <div id="top" className="min-h-screen bg-white text-[#101828]"><Header /><main><HeroSlider /><PromotionalSlider /><CategoryGrid /><section id="video" className="border-b border-slate-200 bg-[#f9fafb] px-5 py-12 md:py-16"><SectionHeading subtitle="Unstoppable Spirit">VIRAT IN ACTION</SectionHeading><div className="relative mx-auto mt-6 aspect-video max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-[#080d2d] shadow-2xl"><video src="/videos/display_video.mp4" autoPlay loop muted playsInline className="size-full object-cover" /></div></section><section id="team-wear" className="grid border-b border-slate-300 md:grid-cols-[75%_25%]"><div className="relative aspect-[2.2/1] border-b border-slate-300 md:border-b-0 md:border-r"><AssetSlot src={siteAssets.teamwearBanner} alt="Teamwear campaign" contain /></div><Link href="#trending-products" className="flex min-h-40 items-center justify-center p-6 text-center text-2xl font-black uppercase md:min-h-0 md:text-3xl">Trending products</Link></section><ActionGalleryCarousel /><section id="partners" className="border-b border-slate-300 bg-[#f9fafb] px-4 py-16 sm:px-6 md:py-24"><SectionHeading>OUR PROUD PARTNERS</SectionHeading><div className="mx-auto mt-12 grid max-w-6xl grid-cols-2 items-center justify-items-center gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-6 md:gap-x-8 md:gap-y-12">{partnerLogos.map((partner) => (<div key={partner.id} className="group flex size-full items-center justify-center p-2 transition-transform duration-300 hover:scale-105"><div className="relative flex h-24 w-full max-w-[130px] items-center justify-center sm:h-28 sm:max-w-[140px] md:h-28 md:max-w-[150px]"><Image src={partner.src} alt={partner.name} width={150} height={150} className="max-h-full max-w-full w-auto h-auto object-contain filter drop-shadow-sm transition-all duration-300 group-hover:brightness-105" /></div></div>))}</div></section><section id="contact-us" className="px-5 py-20 text-center md:py-28"><SectionHeading>Contact us</SectionHeading><div className="mx-auto mt-12 grid max-w-5xl gap-10 text-left text-sm md:grid-cols-4"><div><p className="font-bold uppercase">Contact</p><p className="mt-3 text-slate-500">Email and phone details coming soon.</p></div><div><p className="font-bold uppercase">Explore</p><div className="mt-3 flex flex-col gap-2 text-slate-500"><Link href="#shop-by-category">Categories</Link><Link href="#team-wear">Team wear</Link></div></div><div><p className="font-bold uppercase">Follow</p><p className="mt-3 text-slate-500">Social links coming soon.</p></div><div><p className="font-bold uppercase">Legal</p><p className="mt-3 text-slate-500">Privacy policy · Terms & conditions</p></div></div></section></main><footer className="border-t border-slate-300 px-5 py-6 text-center text-xs text-slate-500">© {new Date().getFullYear()} Virat Sports. All rights reserved.</footer></div>
 }

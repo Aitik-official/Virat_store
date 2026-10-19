@@ -1,36 +1,338 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Menu, Search, ShoppingBag, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Menu, Search, ShoppingBag, X } from 'lucide-react'
 import { megaMenus } from '@/lib/mega-menu-data'
 import { useCart } from '@/lib/cart-context'
+import {
+  getStoredTaxonomyConfig,
+  type SiteAnnouncement,
+  type StoreTaxonomyConfig,
+  defaultTaxonomyConfig,
+} from '@/lib/store-taxonomy'
 
 export function SiteHeader() {
+  const router = useRouter()
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { totalCount } = useCart()
+  const [taxonomyConfig, setTaxonomyConfig] = useState<StoreTaxonomyConfig>(defaultTaxonomyConfig)
+  const [announcement, setAnnouncement] = useState<SiteAnnouncement | null>(null)
+  const [desktopAnnouncementIndex, setDesktopAnnouncementIndex] = useState(0)
+  const [mobileAnnouncementIndex, setMobileAnnouncementIndex] = useState(0)
+  const [mobilePassCount, setMobilePassCount] = useState(0)
+  const [mobileTickerKey, setMobileTickerKey] = useState(0)
 
-  const navItems = [
-    { name: 'NEW ARRIVALS', href: '/products?badge=new' },
-    { name: 'MEN', href: '/products?gender=men', hasDropdown: true },
-    { name: 'WOMEN', href: '/products?gender=women', hasDropdown: true },
-    { name: 'CRICKET', href: '/products?sport=cricket', hasDropdown: true },
-    { name: 'ACCESSORIES', href: '/products?sport=accessories', hasDropdown: true },
-    { name: 'ABOUT', href: '/#see-it-in-action' },
+  // Derive list of announcements
+  const announcementItems = (announcement?.items && announcement.items.length > 0)
+    ? announcement.items
+    : (announcement?.text ? [{ text: announcement.text, linkText: announcement.linkText, linkHref: announcement.linkHref }] : [])
+
+  // Auto-slide on desktop/tablet every 4.5 seconds
+  useEffect(() => {
+    if (announcementItems.length <= 1) return
+    const timer = setInterval(() => {
+      setDesktopAnnouncementIndex((prev) => (prev + 1) % announcementItems.length)
+    }, 4500)
+    return () => clearInterval(timer)
+  }, [announcementItems.length])
+
+  // Reset indices if out of bounds
+  useEffect(() => {
+    if (desktopAnnouncementIndex >= announcementItems.length && announcementItems.length > 0) {
+      setDesktopAnnouncementIndex(0)
+    }
+    if (mobileAnnouncementIndex >= announcementItems.length && announcementItems.length > 0) {
+      setMobileAnnouncementIndex(0)
+      setMobilePassCount(0)
+    }
+  }, [announcementItems.length, desktopAnnouncementIndex, mobileAnnouncementIndex])
+
+  useEffect(() => {
+    // Initial read
+    const conf = getStoredTaxonomyConfig()
+    setTaxonomyConfig(conf)
+    if (conf?.announcement) setAnnouncement(conf.announcement)
+
+    // Listen to changes from Admin
+    const handleStorageChange = () => {
+      const updatedConf = getStoredTaxonomyConfig()
+      setTaxonomyConfig(updatedConf)
+      if (updatedConf?.announcement) setAnnouncement(updatedConf.announcement)
+    }
+    window.addEventListener('storage', handleStorageChange)
+
+    // Also fetch latest from API in background
+    fetch('/api/taxonomy')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.taxonomy) {
+          const apiAnnouncement = data.taxonomy.announcement || {}
+          const merged: StoreTaxonomyConfig = {
+            ...defaultTaxonomyConfig,
+            ...data.taxonomy,
+            mainCategories: data.taxonomy.mainCategories?.length ? data.taxonomy.mainCategories : defaultTaxonomyConfig.mainCategories,
+            categories: data.taxonomy.categories?.length ? data.taxonomy.categories : defaultTaxonomyConfig.categories,
+            announcement: {
+              ...defaultTaxonomyConfig.announcement,
+              ...apiAnnouncement,
+              items: Array.isArray(apiAnnouncement.items) && apiAnnouncement.items.length > 0
+                ? apiAnnouncement.items
+                : (apiAnnouncement.text ? [{ text: apiAnnouncement.text, linkText: apiAnnouncement.linkText, linkHref: apiAnnouncement.linkHref }] : defaultTaxonomyConfig.announcement.items),
+            },
+          }
+          setTaxonomyConfig(merged)
+          if (merged.announcement) setAnnouncement(merged.announcement)
+        }
+      })
+      .catch(() => {})
+
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  // Build dynamic navigation items
+  interface NavItem {
+    name: string
+    href: string
+    hasDropdown: boolean
+    value?: string
+    isAccent?: boolean
+  }
+
+  const mainCatsOnNav = (taxonomyConfig.mainCategories || [])
+    .filter((mc) => mc.showOnNavbar !== false)
+
+  const dynamicNavItems: NavItem[] = [
+    { name: 'NEW ARRIVALS', href: '/products?badge=new', hasDropdown: false },
+    ...mainCatsOnNav.map((mc) => {
+      const val = mc.value.toLowerCase()
+      let href = `/products?category=${val}`
+      if (val === 'men') href = '/products?gender=men'
+      else if (val === 'women') href = '/products?gender=women'
+      else if (val === 'cricket') href = '/products?sport=cricket'
+      else if (val === 'accessories') href = '/products?sport=accessories'
+      return {
+        name: mc.label.toUpperCase(),
+        value: mc.value,
+        href,
+        hasDropdown: true,
+      }
+    }),
+    { name: 'ABOUT', href: '/about', hasDropdown: false },
   ]
 
-  const currentMegaData = activeMenu ? megaMenus[activeMenu] : null
+  // Resolve mega-menu content 100% dynamically from Admin Taxonomy sub-categories
+  const getMegaDataForActiveMenu = (menuName: string) => {
+    // Find matching main category from taxonomyConfig
+    const mainCat = taxonomyConfig.mainCategories?.find(
+      (m) => m.label.toUpperCase() === menuName || m.value.toUpperCase() === menuName
+    )
+    if (!mainCat) return null
+
+    // Fetch all sub-categories assigned to this main category
+    const subCats = (taxonomyConfig.categories || []).filter(
+      (c) => c.parentCategory === mainCat.value || (!c.parentCategory && mainCat.value === 'men')
+    )
+
+    // Build sub-category links with proper query params
+    const allItems = subCats.map((sc) => {
+      let href = `/products?category=${sc.value}`
+      if (mainCat.value === 'men') href += '&gender=men'
+      else if (mainCat.value === 'women') href += '&gender=women'
+      else if (mainCat.value === 'cricket') href += '&sport=cricket'
+      return {
+        label: sc.label.toUpperCase(),
+        href,
+      }
+    })
+
+    // If no sub-categories added yet, fallback to shop all
+    if (allItems.length === 0) {
+      allItems.push(
+        { label: 'ALL ITEMS', href: `/products?category=${mainCat.value}` },
+        { label: 'NEW ARRIVALS', href: `/products?category=${mainCat.value}&badge=new` }
+      )
+    }
+
+    // Split all sub-categories evenly across 3 columns to reduce height and keep dropdown compact
+    const colCount = 3
+    const perCol = Math.ceil(allItems.length / colCount)
+    const col1 = allItems.slice(0, perCol)
+    const col2 = allItems.slice(perCol, perCol * 2)
+    const col3 = allItems.slice(perCol * 2)
+
+    const columns = [
+      {
+        title: `${mainCat.label.toUpperCase()} GEAR`,
+        items: col1,
+      },
+      ...(col2.length > 0
+        ? [
+            {
+              title: `${mainCat.label.toUpperCase()} APPAREL`,
+              items: col2,
+            },
+          ]
+        : []),
+      ...(col3.length > 0
+        ? [
+            {
+              title: 'MORE STYLES',
+              items: col3,
+            },
+          ]
+        : []),
+    ]
+
+    return {
+      label: mainCat.label.toUpperCase(),
+      exploreTitle: mainCat.label.toUpperCase(),
+      exploreHref:
+        mainCat.value === 'men'
+          ? '/products?gender=men'
+          : mainCat.value === 'women'
+          ? '/products?gender=women'
+          : mainCat.value === 'cricket'
+          ? '/products?sport=cricket'
+          : `/products?category=${mainCat.value}`,
+      watermarkText: 'DESIGN\nYOUR OWN.',
+      columns,
+    }
+  }
+
+  const currentMegaData = activeMenu ? getMegaDataForActiveMenu(activeMenu) : null
 
   return (
-    <header
-      className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-[#f8f9fa]/95 backdrop-blur-md shadow-sm transition-all"
-      onMouseLeave={() => setActiveMenu(null)}
-    >
-      <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-6 lg:px-12">
+    <>
+      {/* Dynamic Announcement Bar (Slider on Desktop / Moving Words Ticker on Mobile) */}
+      {announcement?.enabled && announcementItems.length > 0 && (
+        <div
+          className="relative z-50 overflow-hidden px-3 py-2 text-xs font-bold transition-all select-none"
+          style={{
+            backgroundColor: announcement.bgColor || '#080d2d',
+            color: announcement.textColor || '#ffffff',
+          }}
+        >
+          {/* MOBILE VIEW: Moving Words Ticker (plays 2 full rotations before advancing to next announcement) */}
+          <div className="relative flex md:hidden items-center overflow-hidden w-full h-5">
+            <div
+              key={`ticker-${mobileAnnouncementIndex}-${mobileTickerKey}`}
+              className="whitespace-nowrap flex items-center gap-2 will-change-transform animate-announcement-ticker"
+              style={{
+                animationDuration: `${Math.max(6, Math.min(14, (announcementItems[mobileAnnouncementIndex]?.text?.length || 30) * 0.16))}s`,
+              }}
+              onAnimationEnd={() => {
+                // Check if current announcement has completed 2 rotations
+                if (mobilePassCount + 1 >= 2) {
+                  setMobilePassCount(0)
+                  setMobileAnnouncementIndex((prev) => (prev + 1) % announcementItems.length)
+                } else {
+                  setMobilePassCount((c) => c + 1)
+                }
+                setMobileTickerKey((k) => k + 1)
+              }}
+            >
+              <span>{announcementItems[mobileAnnouncementIndex]?.text}</span>
+              {announcementItems[mobileAnnouncementIndex]?.linkText && (
+                <Link
+                  href={announcementItems[mobileAnnouncementIndex]?.linkHref || '/products?badge=new'}
+                  className="underline font-black text-[#e51717] hover:text-white transition inline-flex items-center gap-0.5 ml-1"
+                >
+                  {announcementItems[mobileAnnouncementIndex]?.linkText} →
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* TABLET & DESKTOP VIEW: Clean Animated Slider with Controls */}
+          <div className="hidden md:flex items-center justify-between max-w-[1440px] mx-auto px-4">
+            {/* Left arrow or spacer */}
+            {announcementItems.length > 1 ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setDesktopAnnouncementIndex((prev) => (prev - 1 + announcementItems.length) % announcementItems.length)
+                }
+                aria-label="Previous announcement"
+                className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <div className="w-5" />
+            )}
+
+            {/* Announcement Center text */}
+            <div className="relative flex-1 flex items-center justify-center min-h-[22px] overflow-hidden text-center">
+              {announcementItems.map((item, idx) => {
+                const isActive = idx === desktopAnnouncementIndex
+                return (
+                  <div
+                    key={item.id || idx}
+                    className={`transition-all duration-500 flex items-center justify-center gap-2.5 ${
+                      isActive
+                        ? 'opacity-100 translate-y-0 relative'
+                        : 'opacity-0 absolute pointer-events-none -translate-y-2'
+                    }`}
+                  >
+                    <span className="tracking-wide">{item.text}</span>
+                    {item.linkText && (
+                      <Link
+                        href={item.linkHref || '/products?badge=new'}
+                        className="underline font-black text-[#e51717] hover:text-white transition inline-flex items-center gap-0.5"
+                      >
+                        {item.linkText} →
+                      </Link>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Right arrow or slide dots */}
+            {announcementItems.length > 1 ? (
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 mr-1">
+                  {announcementItems.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setDesktopAnnouncementIndex(i)}
+                      aria-label={`Go to announcement slide ${i + 1}`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === desktopAnnouncementIndex ? 'w-4 bg-[#e51717]' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDesktopAnnouncementIndex((prev) => (prev + 1) % announcementItems.length)
+                  }
+                  aria-label="Next announcement"
+                  className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-5" />
+            )}
+          </div>
+        </div>
+      )}
+
+      <header
+        className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-[#f8f9fa]/95 backdrop-blur-md shadow-sm transition-all"
+        onMouseLeave={() => setActiveMenu(null)}
+      >
+      <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-12">
         {/* Brand Logo */}
         <Link href="/" className="relative flex h-14 w-32 shrink-0 items-center sm:w-36" aria-label="Virat Sports home">
           <Image
@@ -45,7 +347,7 @@ export function SiteHeader() {
 
         {/* Center Desktop Navigation */}
         <nav className="hidden items-center gap-6 lg:flex xl:gap-8" aria-label="Primary navigation">
-          {navItems.map((item) => {
+          {dynamicNavItems.map((item) => {
             const isMenuOpen = activeMenu === item.name
             return (
               <div
@@ -59,7 +361,11 @@ export function SiteHeader() {
                 <Link
                   href={item.href}
                   className={`group relative flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] transition-colors ${
-                    isMenuOpen ? 'text-[#080d2d]' : 'text-[#374151] hover:text-[#080d2d]'
+                    isMenuOpen
+                      ? 'text-[#080d2d]'
+                      : item.isAccent
+                      ? 'text-[#e51717] hover:text-[#c41111] font-black'
+                      : 'text-[#374151] hover:text-[#080d2d]'
                   }`}
                 >
                   <span>{item.name}</span>
@@ -89,7 +395,8 @@ export function SiteHeader() {
                 onSubmit={(e) => {
                   e.preventDefault()
                   if (searchQuery.trim()) {
-                    window.location.href = `/products?search=${encodeURIComponent(searchQuery.trim())}`
+                    router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+                    setSearchOpen(false)
                   }
                 }}
                 className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1 shadow-sm"
@@ -150,57 +457,65 @@ export function SiteHeader() {
       {/* Desktop Mega Menu Dropdown */}
       {currentMegaData && (
         <div
-          className="absolute left-0 top-full w-full border-b border-t border-slate-200 bg-[#f8f9fa] shadow-2xl transition-all duration-200"
+          className="absolute left-0 top-full w-full border-b border-t border-slate-200 bg-[#f8f9fa] shadow-xl transition-all duration-200"
           onMouseEnter={() => setActiveMenu(activeMenu)}
           onMouseLeave={() => setActiveMenu(null)}
         >
-          <div className="relative mx-auto flex max-w-[1440px] overflow-hidden px-8 py-10 lg:px-14">
+          <div className="relative mx-auto flex max-w-[1440px] items-start overflow-hidden px-8 py-5 lg:px-14 lg:py-6">
             {/* Left Big Watermark Background text "DESIGN YOUR OWN." */}
-            <div className="pointer-events-none absolute -bottom-6 left-4 select-none text-[85px] font-black uppercase leading-[0.8] tracking-tighter text-[#080d2d]/[0.04] lg:left-8 lg:text-[115px]">
+            <div className="pointer-events-none absolute -bottom-4 left-4 select-none text-[65px] font-black uppercase leading-[0.8] tracking-tighter text-[#080d2d]/[0.03] lg:left-8 lg:text-[85px]">
               {currentMegaData.watermarkText}
             </div>
 
             {/* Left Column: EXPLORE & Title with Shop Collection link */}
-            <div className="relative z-10 w-64 shrink-0 border-r border-slate-200 pr-8">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#e51717]">
+            <div className="relative z-10 w-56 shrink-0 border-r border-slate-200 pr-6">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#e51717]">
                 EXPLORE
               </span>
-              <h2 className="mt-2 text-4xl font-black uppercase tracking-tight text-[#080d2d]">
+              <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-[#080d2d] lg:text-3xl">
                 {currentMegaData.exploreTitle}
               </h2>
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-slate-300">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 PERSONALISE IT
               </p>
               <Link
                 href={currentMegaData.exploreHref}
                 onClick={() => setActiveMenu(null)}
-                className="mt-4 inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#080d2d] transition-colors hover:text-[#e51717]"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#080d2d] transition-colors hover:text-[#e51717]"
               >
-                <span>SHOP COLLECTION</span>
+                <span>SHOP ALL</span>
                 <span className="text-sm">↗</span>
               </Link>
             </div>
 
-            {/* Right Columns: Categories, Sports, Accessories with dotted lists matching image */}
-            <div className="relative z-10 grid flex-1 grid-cols-3 gap-8 pl-12 lg:gap-12">
+            {/* Right Columns: Dynamic Sub-categories split into 3 compact columns */}
+            <div
+              className={`relative z-10 grid flex-1 gap-6 pl-8 lg:gap-8 lg:pl-10 ${
+                currentMegaData.columns.length === 1
+                  ? 'grid-cols-1 max-w-xs'
+                  : currentMegaData.columns.length === 2
+                  ? 'grid-cols-2 max-w-xl'
+                  : 'grid-cols-3'
+              }`}
+            >
               {currentMegaData.columns.map((column, colIdx) => (
-                <div key={colIdx} className="space-y-4">
+                <div key={colIdx} className="space-y-2.5">
                   {/* Column Header with red dot */}
-                  <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
+                  <div className="flex items-center gap-2 border-b border-slate-200/80 pb-1.5">
                     <span className="size-1.5 rounded-full bg-[#e51717]" />
-                    <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[#080d2d]">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.16em] text-[#080d2d]">
                       {column.title}
                     </h3>
                   </div>
 
                   {/* List of items with red/orange dots */}
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {column.items.map((item, itIdx) => (
                       <li key={itIdx}>
                         <Link
                           href={item.href}
                           onClick={() => setActiveMenu(null)}
-                          className="group flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#4b5563] transition-colors hover:text-[#080d2d]"
+                          className="group flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.06em] text-[#4b5563] transition-colors hover:text-[#080d2d]"
                         >
                           <span className="size-1.5 shrink-0 rounded-full bg-[#f87171] transition-transform duration-200 group-hover:scale-125 group-hover:bg-[#e51717]" />
                           <span className="transition-transform duration-200 group-hover:translate-x-1">
@@ -221,8 +536,8 @@ export function SiteHeader() {
       {mobileMenuOpen && (
         <nav className="max-h-[85vh] overflow-y-auto border-t border-slate-200 bg-white px-6 py-6 lg:hidden" aria-label="Mobile navigation">
           <div className="flex flex-col gap-4">
-            {navItems.map((item) => {
-              const mega = megaMenus[item.name]
+            {dynamicNavItems.map((item) => {
+              const mega = getMegaDataForActiveMenu(item.name)
               return (
                 <div key={item.name} className="border-b border-slate-100 pb-3">
                   <div className="flex items-center justify-between">
@@ -285,5 +600,6 @@ export function SiteHeader() {
         </nav>
       )}
     </header>
+    </>
   )
 }
