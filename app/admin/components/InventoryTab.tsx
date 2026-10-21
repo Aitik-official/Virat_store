@@ -5,7 +5,7 @@ import {
   Package,
   CheckCircle2,
   AlertTriangle,
-  DollarSign,
+  IndianRupee,
   Search,
   RotateCcw,
   Edit2,
@@ -140,7 +140,7 @@ export function InventoryTab({
         <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Avg Price</span>
-            <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600" />
+            <IndianRupee className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600" />
           </div>
           <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-black text-[#080d2d]">₹{metrics.avgPrice}</p>
           <span className="text-[10px] sm:text-[11px] font-medium text-slate-400">Active catalog</span>
