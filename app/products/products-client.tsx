@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Filter, RotateCcw, SlidersHorizontal, Star } from 'lucide-react'
-import { categoryOptions, genderOptions, products as defaultProducts, sportOptions, type Product } from '@/lib/products-data'
+import { Filter, RotateCcw, ShoppingBag, SlidersHorizontal, Star } from 'lucide-react'
+import { categoryOptions, genderOptions, type Product } from '@/lib/products-data'
 
 export function ProductsClient() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [productsList, setProductsList] = useState<Product[]>(defaultProducts)
+  const [productsList, setProductsList] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // Reactive state derived from searchParams so navbar links update the page immediately
   const paramGender = searchParams.get('gender') || 'all'
@@ -44,17 +45,13 @@ export function ProductsClient() {
   }, [searchParams])
 
   useEffect(() => {
-    const sync = () => {
-      try {
-        const stored = localStorage.getItem('virat_admin_products_v1')
-        if (stored) setProductsList(JSON.parse(stored))
-      } catch {}
-    }
-    sync()
+    let isMounted = true
 
+    // Fetch directly from database API
     fetch('/api/products')
       .then((res) => res.json())
       .then((data) => {
+        if (!isMounted) return
         if (data.products && Array.isArray(data.products)) {
           setProductsList(data.products)
           try {
@@ -63,9 +60,29 @@ export function ProductsClient() {
         }
       })
       .catch(() => {})
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
+
+    const sync = () => {
+      try {
+        const stored = localStorage.getItem('virat_admin_products_v1')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) {
+            setProductsList(parsed)
+          }
+        }
+      } catch {}
+    }
 
     window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
+    return () => {
+      isMounted = false
+      window.removeEventListener('storage', sync)
+    }
   }, [])
 
   // Helper to update URL query params when sidebar filters change
@@ -255,7 +272,9 @@ export function ProductsClient() {
               : selectedGender !== 'all'
               ? `${selectedGender}’s Collection`
               : 'All Products'}
-            <span className="ml-2.5 text-base font-bold text-[#e51717]">({filteredProducts.length})</span>
+            {!isLoading && (
+              <span className="ml-2.5 text-base font-bold text-[#e51717]">({filteredProducts.length})</span>
+            )}
           </h1>
         </div>
 
@@ -324,28 +343,6 @@ export function ProductsClient() {
                     className="accent-[#e51717]"
                   />
                   <span>{g.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Sport Filter */}
-          <div className="space-y-2 border-b border-slate-200 pb-5">
-            <h3 className="text-[11px] font-black uppercase tracking-wider text-[#080d2d]">Shop by Sport</h3>
-            <div className="flex flex-col gap-1.5">
-              {sportOptions.map((s) => (
-                <label
-                  key={s.value}
-                  className="flex cursor-pointer items-center gap-2.5 text-xs font-bold capitalize text-slate-600 transition-colors hover:text-[#080d2d]"
-                >
-                  <input
-                    type="radio"
-                    name="sport"
-                    checked={selectedSport === s.value}
-                    onChange={() => handleSportChange(s.value)}
-                    className="accent-[#e51717]"
-                  />
-                  <span>{s.label}</span>
                 </label>
               ))}
             </div>
@@ -451,25 +448,6 @@ export function ProductsClient() {
                   </div>
                 </div>
 
-                {/* Sport */}
-                <div>
-                  <p className="text-xs font-black uppercase text-[#080d2d]">Sport</p>
-                  <div className="mt-2 flex flex-col gap-2">
-                    {sportOptions.map((s) => (
-                      <label key={s.value} className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input
-                          type="radio"
-                          name="mobile-sport"
-                          checked={selectedSport === s.value}
-                          onChange={() => handleSportChange(s.value)}
-                          className="accent-[#e51717]"
-                        />
-                        {s.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Availability / Stock */}
                 <div className="border-b border-slate-100 pb-3">
                   <p className="text-xs font-black uppercase text-[#080d2d]">Availability</p>
@@ -547,7 +525,13 @@ export function ProductsClient() {
 
         {/* Product Cards Grid */}
         <main>
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-24 text-center">
               <p className="text-lg font-black uppercase text-[#080d2d]">No products found</p>
               <p className="mt-1 text-xs text-slate-500">Try adjusting your filters or search keywords.</p>
@@ -566,6 +550,40 @@ export function ProductsClient() {
             </div>
           )}
         </main>
+      </div>
+    </div>
+  )
+}
+
+function ProductCardSkeleton() {
+  return (
+    <div className="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm p-3.5 animate-pulse">
+      {/* Blank image stage with shimmer animation */}
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-slate-100 flex items-center justify-center">
+        <div className="size-10 rounded-full bg-slate-200/80 flex items-center justify-center">
+          <ShoppingBag className="size-5 text-slate-300" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
+      </div>
+
+      {/* Info placeholder */}
+      <div className="flex flex-1 flex-col pt-3.5 pb-1">
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-16 rounded bg-slate-200" />
+          <div className="h-3 w-12 rounded bg-slate-200" />
+        </div>
+        <div className="mt-2.5 h-4 w-4/5 rounded bg-slate-200" />
+        <div className="mt-2 h-3 w-full rounded bg-slate-100" />
+        <div className="mt-1.5 h-3 w-2/3 rounded bg-slate-100" />
+
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+          <div className="h-5 w-20 rounded bg-slate-200" />
+          <div className="flex items-center gap-1.5">
+            <div className="size-3 rounded-full bg-slate-200" />
+            <div className="size-3 rounded-full bg-slate-200" />
+            <div className="size-3 rounded-full bg-slate-200" />
+          </div>
+        </div>
       </div>
     </div>
   )

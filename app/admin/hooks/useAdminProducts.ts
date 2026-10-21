@@ -5,6 +5,7 @@ export const PRODUCTS_STORAGE_KEY = 'virat_admin_products_v1'
 
 export function useAdminProducts(triggerToast: (msg: string) => void) {
   const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedSport, setSelectedSport] = useState('all')
@@ -14,6 +15,7 @@ export function useAdminProducts(triggerToast: (msg: string) => void) {
 
   // Load products strictly from MongoDB
   const fetchProductsFromDatabase = async () => {
+    setIsLoading(true)
     try {
       const prodRes = await fetch('/api/products')
       if (prodRes.ok) {
@@ -29,6 +31,8 @@ export function useAdminProducts(triggerToast: (msg: string) => void) {
       }
     } catch (err) {
       console.error('Failed to load products from database:', err)
+    } finally {
+      setIsLoading(false)
     }
     return []
   }
@@ -158,6 +162,7 @@ export function useAdminProducts(triggerToast: (msg: string) => void) {
     setDeleteConfirmId,
     metrics,
     filteredProducts,
+    isLoading,
     handleToggleStock,
     handleDeleteProduct,
     handleResetCatalog,

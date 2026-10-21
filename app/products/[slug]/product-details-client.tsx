@@ -161,13 +161,21 @@ export function ProductDetailsClient({
   const { addItem } = useCart()
 
   const handleAddToCart = () => {
-    addItem(product, selectedSize, selectedColor, quantity)
+    const activeColorObj = product.colors?.find(
+      (c) => c.name.toLowerCase() === selectedColor.toLowerCase()
+    )
+    const colorImg = activeColorObj?.image || allImages[selectedImage] || product.image
+    addItem(product, selectedSize, selectedColor, quantity, colorImg)
     setAddedSuccess(true)
     setTimeout(() => setAddedSuccess(false), 3000)
   }
 
   const handleBuyNow = () => {
-    addItem(product, selectedSize, selectedColor, quantity)
+    const activeColorObj = product.colors?.find(
+      (c) => c.name.toLowerCase() === selectedColor.toLowerCase()
+    )
+    const colorImg = activeColorObj?.image || allImages[selectedImage] || product.image
+    addItem(product, selectedSize, selectedColor, quantity, colorImg)
     router.push('/checkout')
   }
 

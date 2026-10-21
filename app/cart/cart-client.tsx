@@ -86,7 +86,7 @@ export function CartClient() {
                 className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-100"
               >
                 <Image
-                  src={item.product.image}
+                  src={item.colorImage || item.product.image}
                   alt={item.product.name}
                   fill
                   className="object-contain p-2"
@@ -104,10 +104,20 @@ export function CartClient() {
                 >
                   {item.product.name}
                 </Link>
-                <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
-                  <span>Size: <strong className="text-[#080d2d]">{item.size}</strong></span>
+                <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                  <span>Size: <strong className="text-[#080d2d] uppercase">{item.size}</strong></span>
                   <span>•</span>
-                  <span>Color: <strong className="text-[#080d2d]">{item.color}</strong></span>
+                  <span className="flex items-center gap-1.5">
+                    <span>Color:</span>
+                    {item.colorHex ? (
+                      <span
+                        className="inline-block size-3.5 rounded-full border border-slate-300 shadow-xs"
+                        style={{ backgroundColor: item.colorHex }}
+                        title={item.color}
+                      />
+                    ) : null}
+                    <strong className="text-[#080d2d] capitalize font-bold">{item.color}</strong>
+                  </span>
                 </div>
                 <div className="mt-2 text-sm font-black text-[#080d2d]">
                   ₹{item.product.price.toLocaleString()}

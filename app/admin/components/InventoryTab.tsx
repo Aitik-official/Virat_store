@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Edit2,
   Trash2,
+  Loader2,
 } from 'lucide-react'
 import {
   categoryOptions,
@@ -38,6 +39,7 @@ export interface InventoryTabProps {
   setStockFilter: (val: 'all' | 'in_stock' | 'out_of_stock') => void
   onResetCatalog: () => void
   filteredProducts: Product[]
+  isLoading?: boolean
   onToggleStock: (product: Product) => void
   onOpenEditProduct: (product: Product) => void
   onDeleteProduct: (productId: string) => void
@@ -59,6 +61,7 @@ export function InventoryTab({
   setStockFilter,
   onResetCatalog,
   filteredProducts,
+  isLoading,
   onToggleStock,
   onOpenEditProduct,
   onDeleteProduct,
@@ -216,7 +219,12 @@ export function InventoryTab({
 
         {/* MOBILE CARD VIEW (hidden on md and above) */}
         <div className="block md:hidden divide-y divide-slate-100">
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex min-h-[200px] flex-col items-center justify-center p-8 text-center">
+              <Loader2 className="size-7 animate-spin text-[#e51717] mb-2" />
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Loading catalog items...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="p-8 text-center text-slate-400 font-medium text-xs">
               No products found matching your search.
             </div>
@@ -373,7 +381,14 @@ export function InventoryTab({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-[#080d2d]">
-              {filteredProducts.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <Loader2 className="size-7 animate-spin text-[#e51717] mx-auto mb-2" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Loading catalog items...</p>
+                  </td>
+                </tr>
+              ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
                     No products found matching your search.

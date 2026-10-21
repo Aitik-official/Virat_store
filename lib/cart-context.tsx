@@ -7,12 +7,20 @@ export type CartItem = {
   product: Product
   size: string
   color: string
+  colorHex?: string
+  colorImage?: string
   quantity: number
 }
 
 type CartContextType = {
   items: CartItem[]
-  addItem: (product: Product, size: string, color: string, quantity?: number) => void
+  addItem: (
+    product: Product,
+    size: string,
+    color: string,
+    quantity?: number,
+    colorImage?: string
+  ) => void
   removeItem: (productId: string, size: string, color: string) => void
   updateQuantity: (productId: string, size: string, color: string, quantity: number) => void
   clearCart: () => void
@@ -24,29 +32,64 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Load from localStorage if present
+  // Load from localStorage on client mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem('virat_cart')
       if (saved) {
-        setItems(JSON.parse(saved))
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          setItems(parsed)
+        }
       }
     } catch {
       // ignore
+    } finally {
+      setIsInitialized(true)
     }
+
+    // Also sync if another tab modifies the cart
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'virat_cart') {
+        try {
+          if (e.newValue) {
+            setItems(JSON.parse(e.newValue))
+          } else {
+            setItems([])
+          }
+        } catch {}
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  // Sync to localStorage
+  // Sync to localStorage only AFTER initial load has completed
   useEffect(() => {
+    if (!isInitialized) return
     try {
       localStorage.setItem('virat_cart', JSON.stringify(items))
     } catch {
       // ignore
     }
-  }, [items])
+  }, [items, isInitialized])
 
-  const addItem = (product: Product, size: string, color: string, quantity = 1) => {
+  const addItem = (
+    product: Product,
+    size: string,
+    color: string,
+    quantity = 1,
+    customColorImage?: string
+  ) => {
+    // Find matching color data from product if available
+    const matchedColorObj = product.colors?.find(
+      (c) => c.name.toLowerCase() === color.toLowerCase()
+    )
+    const colorHex = matchedColorObj?.hex
+    const colorImage = customColorImage || matchedColorObj?.image || product.image
+
     setItems((prev) => {
       const existing = prev.find(
         (i) => i.product.id === product.id && i.size === size && i.color === color
@@ -54,11 +97,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existing) {
         return prev.map((i) =>
           i.product.id === product.id && i.size === size && i.color === color
-            ? { ...i, quantity: i.quantity + quantity }
+            ? { ...i, quantity: i.quantity + quantity, colorHex: colorHex || i.colorHex, colorImage: colorImage || i.colorImage }
             : i
         )
       }
-      return [...prev, { product, size, color, quantity }]
+      return [...prev, { product, size, color, colorHex, colorImage, quantity }]
     })
   }
 

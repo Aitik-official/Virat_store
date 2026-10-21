@@ -391,35 +391,37 @@ export function SiteHeader() {
         <div className="flex items-center gap-5 sm:gap-6">
           <div className="relative">
             {searchOpen ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  if (searchQuery.trim()) {
-                    router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
-                    setSearchOpen(false)
-                  }
-                }}
-                className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1 shadow-sm"
-              >
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                  className="w-32 bg-transparent text-xs text-[#080d2d] outline-none sm:w-48"
-                />
-                <button type="submit" aria-label="Submit search">
-                  <Search className="size-4 text-[#e51717]" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(false)}
-                  aria-label="Close search"
+              <div className="fixed inset-x-0 top-0 z-50 flex items-center gap-2 bg-white px-4 py-3 shadow-md sm:static sm:z-auto sm:bg-transparent sm:p-0 sm:shadow-none">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    if (searchQuery.trim()) {
+                      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+                      setSearchOpen(false)
+                    }
+                  }}
+                  className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 shadow-sm sm:flex-initial"
                 >
-                  <X className="size-3.5 text-slate-400" />
-                </button>
-              </form>
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    className="w-full bg-transparent text-xs text-[#080d2d] outline-none sm:w-48"
+                  />
+                  <button type="submit" aria-label="Submit search">
+                    <Search className="size-4 text-[#e51717]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSearchOpen(false)}
+                    aria-label="Close search"
+                  >
+                    <X className="size-4 text-slate-400" />
+                  </button>
+                </form>
+              </div>
             ) : (
               <button
                 type="button"

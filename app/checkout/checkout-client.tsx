@@ -132,13 +132,25 @@ function OrderSummary({
         {items.map((item) => (
           <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex items-center gap-3">
             <div className="relative size-12 shrink-0 rounded-lg overflow-hidden bg-slate-50 border border-slate-100">
-              <Image src={item.product.image} alt={item.product.name} fill className="object-contain p-1" />
+              <Image src={item.colorImage || item.product.image} alt={item.product.name} fill className="object-contain p-1" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black uppercase text-[#080d2d] truncate">{item.product.name}</p>
-              <p className="text-[10px] text-slate-500">
-                {item.size} · {item.color} · Qty {item.quantity}
-              </p>
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                <span className="uppercase font-bold">{item.size}</span>
+                <span>·</span>
+                <span className="flex items-center gap-1">
+                  {item.colorHex && (
+                    <span
+                      className="size-2 rounded-full border border-slate-300 inline-block"
+                      style={{ backgroundColor: item.colorHex }}
+                    />
+                  )}
+                  <span className="capitalize font-semibold text-slate-700">{item.color}</span>
+                </span>
+                <span>·</span>
+                <span>Qty {item.quantity}</span>
+              </div>
             </div>
             <span className="text-xs font-black text-[#080d2d]">
               ₹{(item.product.price * item.quantity).toLocaleString()}
@@ -694,7 +706,7 @@ export function CheckoutClient() {
         quantity: item.quantity,
         size: item.size,
         color: item.color,
-        image: item.product.image,
+        image: item.colorImage || item.product.image,
       })),
       subtotal,
       discount,

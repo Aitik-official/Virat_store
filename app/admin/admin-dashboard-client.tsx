@@ -12,14 +12,51 @@ import { TaxonomyManagerTab } from './components/TaxonomyManagerTab'
 import { AdminSidebar, type AdminTab } from './components/AdminSidebar'
 import { AdminHeader } from './components/AdminHeader'
 
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAdminProducts } from './hooks/useAdminProducts'
 import { useAdminSiteConfig } from './hooks/useAdminSiteConfig'
 import { useProductForm } from './hooks/useProductForm'
 
-export function AdminDashboardClient() {
+const VALID_TABS: AdminTab[] = ['orders', 'inventory', 'media', 'taxonomy', 'settings']
+
+export function AdminDashboardClient({ initialTab }: { initialTab?: AdminTab }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
-  const [activeTab, setActiveTab] = useState<AdminTab>('orders')
+  
+  // Resolve initial active tab: explicit prop -> URL query param -> localStorage -> fallback 'orders'
+  const queryTab = searchParams.get('tab') as AdminTab | null
+  const [activeTab, setActiveTabState] = useState<AdminTab>(() => {
+    if (initialTab && VALID_TABS.includes(initialTab)) return initialTab
+    if (queryTab && VALID_TABS.includes(queryTab)) return queryTab
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('virat_admin_active_tab') as AdminTab | null
+        if (saved && VALID_TABS.includes(saved)) return saved
+      } catch {}
+    }
+    return 'orders'
+  })
+
+  // Synchronize tab state with router URL and localStorage
+  const setActiveTab = (tab: AdminTab) => {
+    setActiveTabState(tab)
+    try {
+      localStorage.setItem('virat_admin_active_tab', tab)
+    } catch {}
+    router.replace(`/admin?tab=${tab}`, { scroll: false })
+  }
+
+  // React to browser back/forward or external URL changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as AdminTab | null
+    if (tabParam && VALID_TABS.includes(tabParam) && tabParam !== activeTab) {
+      setActiveTabState(tabParam)
+    }
+  }, [searchParams])
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
@@ -62,6 +99,7 @@ export function AdminDashboardClient() {
     setDeleteConfirmId,
     metrics,
     filteredProducts,
+    isLoading: isLoadingProducts,
     handleToggleStock,
     handleDeleteProduct,
     handleResetCatalog,
@@ -165,6 +203,7 @@ export function AdminDashboardClient() {
               setStockFilter={setStockFilter}
               onResetCatalog={handleResetCatalog}
               filteredProducts={filteredProducts}
+              isLoading={isLoadingProducts}
               onToggleStock={handleToggleStock}
               onOpenEditProduct={productForm.handleOpenEditProduct}
               onDeleteProduct={handleDeleteProduct}

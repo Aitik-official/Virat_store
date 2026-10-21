@@ -70,8 +70,8 @@ const footerLinks = {
 function FooterCol({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
     <div>
-      <h3 className="mb-6 text-[10px] font-black uppercase tracking-[0.35em] text-white">{title}</h3>
-      <ul className="flex flex-col gap-3.5">
+      <h3 className="mb-3 text-[10px] font-black uppercase tracking-[0.35em] text-white sm:mb-6">{title}</h3>
+      <ul className="flex flex-col gap-2.5 sm:gap-3.5">
         {links.map((link) => (
           <li key={link.label}>
             <Link
@@ -223,9 +223,9 @@ export function SiteFooter() {
         </div>
 
         {/* Divider + Bottom Bar */}
-        <div className="mt-16 flex flex-col gap-5 border-t border-white/10 pt-7 text-[11px] font-bold uppercase tracking-[0.18em] text-white md:flex-row md:items-center md:justify-between">
+        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-white sm:mt-16 sm:gap-5 sm:pt-7 md:flex-row md:items-center md:justify-between">
           <span>© {new Date().getFullYear()} Virat Sports. Never Give Up.</span>
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-wrap gap-4 sm:gap-6">
             <Link href="/privacy" className="transition-colors hover:text-[#e51717]">
               Privacy Policy
             </Link>
